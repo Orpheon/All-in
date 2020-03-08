@@ -1,5 +1,5 @@
 import league.game
 
 game = league.game.GameEngine(5)
-game.start_game([0, 0, 0, 0, 0, 0])
-print(game.cards)
+game.run_game([0, 0, 0, 0, 0, 0])
+print(game.community_cards)
