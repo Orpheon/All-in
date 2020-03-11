@@ -13,6 +13,8 @@ class BaselinePlayer(BasePokerPlayer):
     https://github.com/ishikota/PyPokerEngine/blob/master/AI_CALLBACK_FORMAT.md
     """
 
+    id = 'Baseline'
+
     def __str__(self):
         return "BaselinePlayer"
 

@@ -4,6 +4,8 @@ import random as rand
 
 class RandomPlayer(BasePokerPlayer):
 
+    id = 'Random'
+
     def __init__(self):
         super().__init__()
         self.fold_ratio = 1.0 / 3

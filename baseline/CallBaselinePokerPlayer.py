@@ -8,6 +8,8 @@ class CallBaselinePlayer(BasePokerPlayer):
     https://github.com/ishikota/PyPokerEngine/blob/master/AI_CALLBACK_FORMAT.md
     """
 
+    id = 'Call'
+
     def __str__(self):
         return "CallBaselinePlayer"
 
