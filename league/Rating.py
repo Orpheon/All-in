@@ -68,17 +68,10 @@ class Rating:
 
 
 if __name__ == '__main__':
-  rating = Rating('./ratings.json')
-  # rating.load_ratings()
-  # rating._update_ranks({'player1': {'mu': 110, 'sigma': 20}, 'player2': {'mu': 90, 'sigma': 10}})
-  # rating._update_ranks({'player1': {'mu': 150, 'sigma': 20}, 'player2': {'mu': 50, 'sigma': 10}})
-  print(rating._ratings)
-  rating.save_ratings()
-  print(rating._ratings)
-
+  rating = Rating('ratings.json')
   players = ['player{0}'.format(n) for n in range(2, 7)]
 
-  for i in range(10):
+  for _ in range(10):
     random.shuffle(players)
     rating.update_from_placings(['player1', *players])
 
