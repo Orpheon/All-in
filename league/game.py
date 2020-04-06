@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import pickle
 
 PRE_FLOP = 0
 FLOP = 1
@@ -23,33 +24,50 @@ class GameEngine:
       raise ValueError("Only 6 players allowed")
     random.shuffle(players)
 
-    cards = np.tile(np.arange(52), (self.BATCH_SIZE, 1))
-    for i in range(self.BATCH_SIZE):
-      cards[i, :] = np.random.permutation(cards[i, :])
-    community_cards = cards[:, :5]
-    hole_cards = np.reshape(cards[:, 5:5 + 2 * len(players)], (self.BATCH_SIZE, len(players), 2))
+    # cards = np.tile(np.arange(52), (self.BATCH_SIZE, 1))
+    # for i in range(self.BATCH_SIZE):
+    #   cards[i, :] = np.random.permutation(cards[i, :])
+    # community_cards = cards[:, :5]
+    # hole_cards = np.reshape(cards[:, 5:5 + 2 * len(players)], (self.BATCH_SIZE, len(players), 2))
+    #
+    # with open("tmp_cards.dump", "wb") as f:
+    #   pickle.dump((community_cards, hole_cards), f)
+
+    with open("tmp_cards.dump", "rb") as f:
+      community_cards, hole_cards = pickle.load(f)
 
     winners = np.zeros((self.BATCH_SIZE, len(players)))
     still_playing = np.ones((self.BATCH_SIZE, len(players)))
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)))
     visible_community_cards = np.zeros((self.BATCH_SIZE, 5))
 
+    print("PREFLOP")
+
     # Pre-flop
     prev_round_investment += self.run_round(players, prev_round_investment, still_playing, PRE_FLOP, hole_cards, visible_community_cards)
+
+    print("FLOP")
 
     # Flop
     visible_community_cards[:, :3] = community_cards[:, :3]
     prev_round_investment += self.run_round(players, prev_round_investment, still_playing, FLOP, hole_cards, visible_community_cards)
 
+    print("TURN")
+
     # Turn
     visible_community_cards[:, 3] = community_cards[:, 3]
     prev_round_investment += self.run_round(players, prev_round_investment, still_playing, TURN, hole_cards, visible_community_cards)
 
+    print("RIVER")
+
     # River
     prev_round_investment += self.run_round(players, prev_round_investment, still_playing, RIVER, hole_cards, community_cards)
 
+    print("SHOWDOWN")
+
     # Showdown
     pool = np.sum(prev_round_investment, axis=1)
+    print("Total pool", pool)
     # TODO: WINNING
     # winner_exists = np.sum(winners, axis=1)
     # for game_idx in range(self.BATCH_SIZE):
