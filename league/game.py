@@ -79,14 +79,17 @@ class GameEngine:
     round_countdown[:] = len(players)
 
     while True:
-      running_games = np.nonzero(round_countdown > 0)
+      running_games = np.nonzero(round_countdown > 0)[0]
       for player_idx, player in enumerate(players):
-        actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, hole_cards,
-                                      community_cards)
+        actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment,
+                                      hole_cards[:, player_idx, :], community_cards)
 
         round_countdown[running_games] -= 1
 
-        actions = np.multiply(np.multiply(actions, still_playing[:, player_idx]), running_games)
+        actions *= (round_countdown > 0) * still_playing[:, player_idx]
+
+        print("Player", player_idx)
+        print("Actions", actions)
 
         ###########
         # RAISING #
@@ -98,24 +101,29 @@ class GameEngine:
             actions == RAISE,
             max_bets + min_raise > self.INITIAL_CAPITAL - prev_round_investment[:, player_idx]
           )
-        )
-        # All of these players can't afford to raise properly, so they do a false raise and all-in
-        actions[false_raises] = ALLIN
-        investment = self.INITIAL_CAPITAL - prev_round_investment[false_raises, player_idx]
-        max_bets[false_raises] = np.max(investment, max_bets[false_raises])
-        current_allin_check[false_raises, player_idx] = 1
-        current_bets[false_raises, player_idx] = investment
+        )[0]
+        if false_raises.size > 0:
+          print("False raises", false_raises)
+          # All of these players can't afford to raise properly, so they do a false raise and all-in
+          actions[false_raises] = ALLIN
+          investment = self.INITIAL_CAPITAL - prev_round_investment[false_raises, player_idx]
+          max_bets[false_raises] = np.maximum(investment, max_bets[false_raises])
+          current_allin_check[false_raises, player_idx] = 1
+          current_bets[false_raises, player_idx] = investment
 
         # Handle the real raises
-        raises = np.where(actions == RAISE)
-        investment = current_bets[raises, player_idx] + np.max(amounts[raises], max_bets[raises] + min_raise[raises])
-        # Isolate all the games where someone had just gone allin and save for them the sidepool
-        allin_poolsize[np.nonzero(current_allin_check[raises, :])] = np.sum(prev_round_investment, axis=1) + np.sum(current_bets, axis=1)
-        current_allin_check[raises, :] = 0
-        # Reset the bets and countdown
-        max_bets[raises] = investment
-        current_bets[raises, player_idx] = investment
-        round_countdown[raises] = len(players)
+        raises = np.where(actions == RAISE)[0]
+        if raises.size > 0:
+          print("True raises", raises, amounts[raises])
+          investment = np.maximum(current_bets[raises, player_idx] + amounts[raises], max_bets[raises] + min_raise[raises])
+          # Isolate all the games where someone had just gone allin and save for them the sidepool
+          sidepool_indices = np.nonzero(current_allin_check[raises, :])
+          allin_poolsize[sidepool_indices] = (np.sum(prev_round_investment, axis=1) + np.sum(current_bets, axis=1))[sidepool_indices[0]]
+          current_allin_check[raises, :] = 0
+          # Reset the bets and countdown
+          max_bets[raises] = investment
+          current_bets[raises, player_idx] = investment
+          round_countdown[raises] = len(players)
 
         ###########
         # CALLING #
@@ -127,26 +135,32 @@ class GameEngine:
             actions == CALL,
             prev_round_investment[:, player_idx] + (max_bets - current_bets[:, player_idx]) > self.INITIAL_CAPITAL
           )
-        )
-        # All of these players can't actually afford to call, so they go all-in instead
-        actions[false_calls] = FOLD
-        investment = self.INITIAL_CAPITAL - prev_round_investment[false_calls, player_idx]
-        current_allin_check[false_calls, player_idx] = 1
-        current_bets[false_calls, player_idx] = investment
+        )[0]
+        if false_calls.size > 0:
+          print("False calls", false_calls)
+          # All of these players can't actually afford to call, so they go all-in instead
+          actions[false_calls] = FOLD
+          investment = self.INITIAL_CAPITAL - prev_round_investment[false_calls, player_idx]
+          current_allin_check[false_calls, player_idx] = 1
+          current_bets[false_calls, player_idx] = investment
 
         # Handle the real checks
-        calls = np.where(actions == CALL)
-        investment = max_bets[calls]
-        # Reset the bets and countdown
-        max_bets[calls] = investment
-        current_bets[calls, player_idx] = investment
+        calls = np.where(actions == CALL)[0]
+        if calls.size > 0:
+          print("True calls", calls)
+          investment = max_bets[calls]
+          # Reset the bets and countdown
+          max_bets[calls] = investment
+          current_bets[calls, player_idx] = investment
 
         ###########
         # FOLDING #
         ###########
 
-        still_playing[actions == FOLD, player_idx] = 0
-        still_playing[actions == ALLIN, player_idx] = 0
+        still_playing[np.where(actions == FOLD)[0], player_idx] = 0
+        still_playing[np.where(actions == ALLIN)[0], player_idx] = 0
+
+        print("Bets after turn", current_bets[:, player_idx])
 
         if np.sum(round_countdown[running_games]) <= 0:
           return current_bets
