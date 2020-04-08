@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import pickle
+import treys
 
 PRE_FLOP = 0
 FLOP = 1
@@ -11,6 +12,8 @@ FOLD = 0
 CALL = 1
 RAISE = 2
 ALLIN = 3
+
+FULL_DECK = np.array(treys.Deck.GetFullDeck())
 
 class GameEngine:
   def __init__(self, BATCH_SIZE, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND):
@@ -24,14 +27,14 @@ class GameEngine:
       raise ValueError("Only 6 players allowed")
     random.shuffle(players)
 
-    # cards = np.tile(np.arange(52), (self.BATCH_SIZE, 1))
-    # for i in range(self.BATCH_SIZE):
-    #   cards[i, :] = np.random.permutation(cards[i, :])
-    # community_cards = cards[:, :5]
-    # hole_cards = np.reshape(cards[:, 5:5 + 2 * len(players)], (self.BATCH_SIZE, len(players), 2))
-    #
-    # with open("tmp_cards.dump", "wb") as f:
-    #   pickle.dump((community_cards, hole_cards), f)
+    cards = np.tile(np.arange(52), (self.BATCH_SIZE, 1))
+    for i in range(self.BATCH_SIZE):
+      cards[i, :] = FULL_DECK[np.random.permutation(cards[i, :])]
+    community_cards = cards[:, :5]
+    hole_cards = np.reshape(cards[:, 5:5 + 2 * len(players)], (self.BATCH_SIZE, len(players), 2))
+
+    with open("tmp_cards.dump", "wb") as f:
+      pickle.dump((community_cards, hole_cards), f)
 
     with open("tmp_cards.dump", "rb") as f:
       community_cards, hole_cards = pickle.load(f)
@@ -39,24 +42,21 @@ class GameEngine:
     winners = np.zeros((self.BATCH_SIZE, len(players)))
     still_playing = np.ones((self.BATCH_SIZE, len(players)))
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)))
-    visible_community_cards = np.zeros((self.BATCH_SIZE, 5))
 
     print("PREFLOP")
 
     # Pre-flop
-    prev_round_investment += self.run_round(players, prev_round_investment, still_playing, PRE_FLOP, hole_cards, visible_community_cards)
+    prev_round_investment += self.run_round(players, prev_round_investment, still_playing, PRE_FLOP, hole_cards, community_cards[:, :0])
 
     print("FLOP")
 
     # Flop
-    visible_community_cards[:, :3] = community_cards[:, :3]
-    prev_round_investment += self.run_round(players, prev_round_investment, still_playing, FLOP, hole_cards, visible_community_cards)
+    prev_round_investment += self.run_round(players, prev_round_investment, still_playing, FLOP, hole_cards, community_cards[:, :3])
 
     print("TURN")
 
     # Turn
-    visible_community_cards[:, 3] = community_cards[:, 3]
-    prev_round_investment += self.run_round(players, prev_round_investment, still_playing, TURN, hole_cards, visible_community_cards)
+    prev_round_investment += self.run_round(players, prev_round_investment, still_playing, TURN, hole_cards, community_cards[:, :4])
 
     print("RIVER")
 
