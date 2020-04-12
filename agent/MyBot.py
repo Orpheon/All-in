@@ -7,6 +7,7 @@ class MyBotPlayer(BasePokerPlayer):
     Documentation for callback arguments given here:
     https://github.com/ishikota/PyPokerEngine/blob/master/AI_CALLBACK_FORMAT.md
     """
+    id = 'MyBot'
 
     def __str__(self):
         return "MyBot"

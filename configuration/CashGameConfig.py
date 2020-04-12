@@ -19,7 +19,7 @@ class CashGameConfig():
         :param evaluations: int. Number of poker hands to evaluate
         :param log_file_location: str. location for a detailed log file.
         """
-        now = datetime.strftime(datetime.now(), "%d.%m.%Y-%H:%M:%S")
+        now = datetime.strftime(datetime.now(), "%Y-%m-%d_%H%M%S")
         self.log_file_location = os.path.join(log_file_location, f"evaluation_{now}.json")
         self.initial_stack = 100 * small_blind_amount * 2
         self.config = setup_config(max_round=evaluations, initial_stack=self.initial_stack,
