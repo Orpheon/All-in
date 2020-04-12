@@ -26,8 +26,7 @@ class CashGameConfig():
                                    small_blind_amount=small_blind_amount)
         self.evaluations = evaluations
         self.player_final_stack = {}
-        self.baselines = [BaselinePokerPlayer.BaselinePlayer, CallBaselinePokerPlayer.CallBaselinePlayer,
-                          RandomPokerPlayer.RandomPlayer]
+        self.baselines = []
 
     def run_evaluation(self, verbose: int = 0) -> Dict[str, int]:
         if len(self.config.players_info) <= 1:
@@ -37,7 +36,7 @@ class CashGameConfig():
 
         # Prettify game result:
         for player in game_result['players']:
-            self.player_final_stack[player['name']] = player['cashgame_stack']
+            self.player_final_stack[player['uuid']] = player['cashgame_stack']
         self.player_final_stack = {k: v for k, v in
                                    sorted(self.player_final_stack.items(), key=lambda item: item[1], reverse=True)}
 

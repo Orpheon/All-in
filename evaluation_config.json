@@ -1,11 +1,8 @@
 {
   "players": {
-    "MyBot": "MyBotPlayer"
+    "LeagueTestBot": "LeagueTestBot"
   },
   "baselines": {
-    "BaselinePokerPlayer": "BaselinePlayer",
-    "CallBaselinePokerPlayer": "CallBaselinePlayer",
-    "RandomPokerPlayer": "RandomPlayer"
   },
   "n_evaluations": 100,
   "small_blind": 1,

@@ -3,10 +3,13 @@ import argparse
 import importlib
 import json
 import os
+import shutil
+import pickle
 
 from baseline.ConsolePokerPlayer import ConsolePlayer
 from configuration.CashGameConfig import CashGameConfig
 from agent.MyBot import MyBotPlayer
+from agent.LeagueTestBot import LeagueTestBot
 
 parser = argparse.ArgumentParser(description='Run poker evaluation')
 parser.add_argument('--config', help='Config file')
@@ -49,9 +52,14 @@ if __name__ == '__main__':
         register_players(config_file, poker_config)
     else:
         # Use this for manual evaluation
-        poker_config = CashGameConfig(evaluations=100)
+        poker_config = CashGameConfig(evaluations=10000)
         # poker_config.register_player("Console", ConsolePlayer())
-        poker_config.register_player("MyBot", MyBotPlayer())
+        poker_config.register_player("LeagueTestBot", LeagueTestBot())
+        poker_config.register_player("LeagueTestBot", LeagueTestBot())
+        poker_config.register_player("LeagueTestBot", LeagueTestBot())
+        poker_config.register_player("LeagueTestBot", LeagueTestBot())
+        poker_config.register_player("LeagueTestBot", LeagueTestBot())
+        poker_config.register_player("LeagueTestBot", LeagueTestBot())
         poker_config.add_all_available_baselines()
 
     print(f"Start evaluating {poker_config.evaluations} hands")
@@ -60,6 +68,18 @@ if __name__ == '__main__':
     end = time.time()
     time_taken = end - start
     print('Evaluation Time: ', time_taken)
+    print("Compressing files..")
+    filelist = sorted(os.listdir("testcases"))
+    data = []
+    for filepath in filelist:
+        with open(os.path.join("testcases", filepath), "rb") as f:
+            # TODO: Filter data in more array-friendly form here
+            data.append(pickle.load(f))
+    with open("testcases.pickle", "wb") as f:
+        pickle.dump(data, f)
+    shutil.rmtree("testcases")
+
+    print(filelist)
 
     if args.store_result:
         with open('result.txt', 'w+') as fp:
