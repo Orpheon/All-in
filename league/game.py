@@ -26,7 +26,6 @@ class GameEngine:
   def run_game(self, players):
     if len(players) != self.N_PLAYERS:
       raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
-    random.shuffle(players)
 
     cards = np.tile(np.arange(52), (self.BATCH_SIZE, 1))
     for i in range(self.BATCH_SIZE):
