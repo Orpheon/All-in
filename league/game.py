@@ -3,15 +3,8 @@ import random
 import pickle
 import treys
 
-PRE_FLOP = 0
-FLOP = 1
-TURN = 2
-RIVER = 3
-
-FOLD = 0
-CALL = 1
-RAISE = 2
-ALLIN = 3
+# FIXME Remove this and add constants.* to everything once merge conflicts no longer an issue
+from constants import *
 
 FULL_DECK = np.array(treys.Deck.GetFullDeck())
 
