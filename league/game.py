@@ -36,6 +36,9 @@ class GameEngine:
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)))
     allin_poolsize = np.full((self.BATCH_SIZE, self.N_PLAYERS), self.INITIAL_CAPITAL * self.N_PLAYERS)
 
+    for player in players:
+      player.start_game(self.BATCH_SIZE, self.INITIAL_CAPITAL, self.N_PLAYERS)
+
     print("PREFLOP")
 
     # Pre-flop
