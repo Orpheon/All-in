@@ -8,7 +8,7 @@ class Player:
   def __init__(self):
     self.rng = np.random.RandomState()
 
-  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, hole_cards, community_cards):
+  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, allined, last_raiser, hole_cards, community_cards):
     # print("player idx", player_idx)
     # print("hole cards")
     # for hand in hole_cards.tolist():

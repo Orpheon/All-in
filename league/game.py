@@ -32,7 +32,8 @@ class GameEngine:
     with open("tmp_cards.dump", "rb") as f:
       community_cards, hole_cards = pickle.load(f)
 
-    still_playing = np.ones((self.BATCH_SIZE, len(players)))
+    folded = np.zeros((self.BATCH_SIZE, len(players)))
+    allined = np.zeros((self.BATCH_SIZE, len(players)))
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)))
     allin_poolsize = np.full((self.BATCH_SIZE, self.N_PLAYERS), self.INITIAL_CAPITAL * self.N_PLAYERS)
 
@@ -42,30 +43,34 @@ class GameEngine:
     print("PREFLOP")
 
     # Pre-flop
-    bets, allin_poolsize = self.run_round(players, prev_round_investment, still_playing, allin_poolsize, PRE_FLOP,
+    bets, allin_poolsize = self.run_round(players, prev_round_investment, folded, allined, allin_poolsize, PRE_FLOP,
                                           hole_cards, community_cards[:, :0])
     prev_round_investment += bets
+    assert(np.equal(folded, allined).sum() == 0)
 
     print("FLOP")
 
     # Flop
-    bets, allin_poolsize = self.run_round(players, prev_round_investment, still_playing, allin_poolsize, FLOP,
+    bets, allin_poolsize = self.run_round(players, prev_round_investment, folded, allined, allin_poolsize, FLOP,
                                           hole_cards, community_cards[:, :3])
     prev_round_investment += bets
+    assert (np.equal(folded, allined).sum() == 0)
 
     print("TURN")
 
     # Turn
-    bets, allin_poolsize = self.run_round(players, prev_round_investment, still_playing, allin_poolsize, TURN,
+    bets, allin_poolsize = self.run_round(players, prev_round_investment, folded, allined, allin_poolsize, TURN,
                                           hole_cards, community_cards[:, :4])
     prev_round_investment += bets
+    assert (np.equal(folded, allined).sum() == 0)
 
     print("RIVER")
 
     # River
-    bets, allin_poolsize = self.run_round(players, prev_round_investment, still_playing, allin_poolsize, RIVER,
+    bets, allin_poolsize = self.run_round(players, prev_round_investment, folded, allined, allin_poolsize, RIVER,
                                           hole_cards, community_cards)
     prev_round_investment += bets
+    assert (np.equal(folded, allined).sum() == 0)
 
     print("SHOWDOWN")
 
@@ -76,7 +81,7 @@ class GameEngine:
     went_allin = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
     went_allin[allin_poolsize < self.INITIAL_CAPITAL * self.N_PLAYERS] = 1
     pots = np.minimum(pool[:, None], allin_poolsize)
-    hand_scores = self.evaluate_hands(community_cards, hole_cards, still_playing + went_allin)
+    hand_scores = self.evaluate_hands(community_cards, hole_cards, np.logical_not(folded))
 
     # Now we face the actually not that easy task of splitting the pool by winners
     # Take the first rank, and then having a boolean (BATCH_SIZE, N_PLAYERS) array be set to 1 for all of all elements
@@ -108,12 +113,13 @@ class GameEngine:
 
     return total_winnings
 
-  def run_round(self, players, prev_round_investment, still_playing, allin_poolsize, round, hole_cards, community_cards):
+  def run_round(self, players, prev_round_investment, folded, allined, allin_poolsize, round, hole_cards, community_cards):
     current_bets = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
     max_bets = np.zeros(self.BATCH_SIZE)
     min_raise = np.zeros(self.BATCH_SIZE)
     min_raise[:] = self.BIG_BLIND
     current_allin_check = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
+    last_raiser = np.zeros(self.BATCH_SIZE, dtype=int)
 
     if round == PRE_FLOP:
       current_bets[:, 0] = self.SMALL_BLIND
@@ -126,12 +132,13 @@ class GameEngine:
     while True:
       running_games = np.nonzero(round_countdown > 0)[0]
       for player_idx, player in enumerate(players):
-        actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment,
-                                      hole_cards[:, player_idx, :], community_cards)
+        actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
+                                      allined, last_raiser, hole_cards[:, player_idx, :], community_cards)
 
         round_countdown[running_games] -= 1
 
-        actions *= (round_countdown > 0) * still_playing[:, player_idx]
+        actions[folded[:, player_idx] == 1] = FOLD
+        actions[allined[:, player_idx] == 1] = ALLIN
 
         # print("Player", player_idx)
         # print("Actions", actions)
@@ -173,6 +180,7 @@ class GameEngine:
           max_bets[raises] = investment
           current_bets[raises, player_idx] = investment
           round_countdown[raises] = len(players)
+        last_raiser[raises] = player_idx
 
         ###########
         # CALLING #
@@ -206,9 +214,9 @@ class GameEngine:
         # FOLDING #
         ###########
 
-        still_playing[np.where(np.logical_and(round_countdown > 0, actions == FOLD))[0], player_idx] = 0
-        still_playing[np.where(np.logical_and(round_countdown > 0, actions == ALLIN))[0], player_idx] = 0
-        round_countdown[still_playing.sum(axis=1) == 1] = 0
+        folded[np.where(np.logical_and(round_countdown > 0, actions == FOLD))[0], player_idx] = 1
+        allined[np.where(np.logical_and(round_countdown > 0, actions == ALLIN))[0], player_idx] = 1
+        round_countdown[(folded + allined).sum(axis=1) == self.N_PLAYERS] = 0
 
         # print("Bets after turn", current_bets[:, player_idx])
 
