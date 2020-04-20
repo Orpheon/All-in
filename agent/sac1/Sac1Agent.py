@@ -42,13 +42,13 @@ class Sac1Agent(BaseAgent):
     self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=self.config['learning_rate'])
     self.qfn_optimizer = torch.optim.Adam(self.qfn.parameters(), lr=self.config['learning_rate'])
 
-  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, allined, last_raiser,
-          hole_cards, community_cards):
+  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards,
+          community_cards):
     state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
 
-    actions = np.random.randint(0, 3, min_raise.size).astype("float")
-    amounts = np.random.rand(min_raise.size) * 5
+    actions = np.random.randint(0, 3, min_raise.size).astype(int)
+    amounts = (np.random.rand(min_raise.size) * 5).astype(int)
 
     return actions, amounts
 
@@ -61,8 +61,8 @@ class Sac1Agent(BaseAgent):
   def spawn_executor(self):
     pass
 
-  def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded,
-                          last_raiser, hole_cards, community_cards):
+  def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
+                          hole_cards, community_cards):
     # First convert the treys card IDs into indices
     hole_cards_converted = 13 * np.log2(np.right_shift(hole_cards, 12) & 0xF) + (np.right_shift(hole_cards, 8) & 0xF)
     community_cards_converted = 13 * np.log2(np.right_shift(community_cards, 12) & 0xF) + (
@@ -86,7 +86,6 @@ class Sac1Agent(BaseAgent):
     player_data[:, 3, :] = (current_bets) / self.INITAL_CAPITAL
     # Who was the last to raise
     player_data[:, 4, last_raiser] = 1
-    print(player_data)
 
     tail_data = np.zeros((self.BATCH_SIZE, 5 + 1))
     tail_data[:, round] = 1
