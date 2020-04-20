@@ -1,5 +1,4 @@
 import numpy as np
-import random
 import pickle
 import treys
 
@@ -8,12 +7,14 @@ from constants import *
 
 FULL_DECK = np.array(treys.Deck.GetFullDeck())
 
+
 class GameEngine:
-  def __init__(self, BATCH_SIZE, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND):
+  def __init__(self, BATCH_SIZE, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, logger):
     self.BATCH_SIZE = BATCH_SIZE
     self.INITIAL_CAPITAL = INITIAL_CAPITAL
     self.SMALL_BLIND = SMALL_BLIND
     self.BIG_BLIND = BIG_BLIND
+    self.logger = logger
     self.N_PLAYERS = 6
 
   def generate_cards(self):
@@ -25,16 +26,18 @@ class GameEngine:
     return community_cards, hole_cards
 
   def run_game(self, players):
+    self.logger.start_new_game(self.N_PLAYERS, self.BATCH_SIZE)
     if len(players) != self.N_PLAYERS:
       raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
 
     community_cards, hole_cards = self.generate_cards()
+    self.logger.set_cards(community_cards, hole_cards)
 
-    with open("tmp_cards.dump", "wb") as f:
-      pickle.dump((community_cards, hole_cards), f)
+    # with open("tmp_cards.dump", "wb") as f:
+    #  pickle.dump((community_cards, hole_cards), f)
 
-    with open("tmp_cards.dump", "rb") as f:
-      community_cards, hole_cards = pickle.load(f)
+    # with open("tmp_cards.dump", "rb") as f:
+    #  community_cards, hole_cards = pickle.load(f)
 
     folded = np.zeros((self.BATCH_SIZE, len(players)), dtype=bool)
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)), dtype=int)
@@ -104,19 +107,24 @@ class GameEngine:
     min_raise[:] = self.BIG_BLIND
     last_raiser = np.zeros(self.BATCH_SIZE, dtype=int)
 
+    player_order = list(enumerate(players))
+
     if round == PRE_FLOP:
       current_bets[:, 0] = self.SMALL_BLIND
       current_bets[:, 1] = self.BIG_BLIND
       max_bets[:] = self.BIG_BLIND
+      player_order = player_order[2:] + player_order[:2]
 
     round_countdown = np.zeros(self.BATCH_SIZE, dtype=int)
     round_countdown[:] = self.N_PLAYERS
 
     while True:
       running_games = np.nonzero(round_countdown > 0)[0]
-      for player_idx, player in enumerate(players):
+
+      for player_idx, player in player_order:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                       last_raiser, hole_cards[:, player_idx, :], community_cards)
+        self.logger.add_action(round, player_idx, actions, amounts)
 
         round_countdown[running_games] -= 1
 
@@ -167,8 +175,8 @@ class GameEngine:
           # Reset the bets and countdown
           max_bets[raises] = investment
           current_bets[raises, player_idx] = investment
-          round_countdown[raises] = len(players)
-        last_raiser[raises] = player_idx
+          round_countdown[raises] = self.N_PLAYERS - 1
+          last_raiser[raises] = player_idx
 
         ###########
         # FOLDING #
@@ -181,7 +189,6 @@ class GameEngine:
 
         if np.sum(round_countdown[running_games]) <= 0:
           return current_bets
-
 
   def evaluate_hands(self, community_cards, hole_cards, contenders):
     evaluator = treys.Evaluator()
