@@ -26,7 +26,7 @@ class Player:
   def start_game(self, batch_size, initial_capital, n_players):
     pass
 
-  def round_end(self, player_idx, round, current_bets, min_raise, prev_round_investment, hole_cards, community_cards):
+  def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards, community_cards, gains):
     pass
 
 

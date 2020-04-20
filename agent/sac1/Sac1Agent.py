@@ -43,8 +43,8 @@ class Sac1Agent(BaseAgent):
                                                   size=15 * self.BATCH_SIZE)
 
     self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=self.config['learning_rate'])
-    qfn_parameters = itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters())
-    self.q_optimizer = torch.optim.Adam(qfn_parameters, lr=self.config['learning_rate'])
+    self.q_optimizer = torch.optim.Adam(itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()),
+                                        lr=self.config['learning_rate'])
 
     self.first_round = True
     self.prev_state = None
@@ -71,7 +71,15 @@ class Sac1Agent(BaseAgent):
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards, community_cards, gains):
     state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
-    self.replaybuffer.store(self.prev_state, self.prev_action, self.gains / self.INITAL_CAPITAL, state, True, self.BATCH_SIZE)
+    self.replaybuffer.store(self.prev_state, self.prev_action, gains / self.INITAL_CAPITAL, state, True, self.BATCH_SIZE)
+    self.train()
+
+  def train(self):
+    self.replaybuffer.shuffle()
+    batch = self.replaybuffer.sample_batch(batch_size=1000)
+    while batch:
+      self.update_parameters(batch)
+      batch = self.replaybuffer.sample_batch(batch_size=1000)
 
   def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                           hole_cards, community_cards):
@@ -174,7 +182,7 @@ class Sac1Agent(BaseAgent):
 
     return loss_pi, pi_info
 
-  def update(self, data):
+  def update_parameters(self, data):
     # First run one gradient descent step for Q1 and Q2
     self.q_optimizer.zero_grad()
     loss_q, q_info = self.compute_loss_q(data)
@@ -186,18 +194,17 @@ class Sac1Agent(BaseAgent):
 
     # Freeze Q-networks so you don't waste computational effort
     # computing gradients for them during the policy learning step.
-    qfn_parameters = itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters())
-    for p in qfn_parameters:
+    for p in itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()):
       p.requires_grad = False
 
     # Next run one gradient descent step for pi.
-      self.pi_optimizer.zero_grad()
+    self.pi_optimizer.zero_grad()
     loss_pi, pi_info = self.compute_loss_pi(data)
     loss_pi.backward()
     self.pi_optimizer.step()
 
     # Unfreeze Q-networks so you can optimize it at next DDPG step.
-    for p in qfn_parameters:
+    for p in itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()):
       p.requires_grad = True
 
     # Record things
