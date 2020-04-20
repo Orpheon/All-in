@@ -89,6 +89,15 @@ class GameEngine:
     return total_winnings
 
   def run_round(self, players, prev_round_investment, folded, round, hole_cards, community_cards):
+    """
+    :param players: [Player]
+    :param prev_round_investment: np.ndarray(batchsize, n_players) = int
+    :param folded: np.ndarray(batchsize, n_players) = bool
+    :param round: int ∈ {0..3}
+    :param hole_cards: np.ndarray(batchsize, n_players, 2) = treys.Card
+    :param community_cards: np.ndarray(batchsize, n_players, {0,3,4,5}) = treys.Card
+    :return: current_bets: np.ndarray(batchsize, n_players)=int {0-200}
+    """
     current_bets = np.zeros((self.BATCH_SIZE, self.N_PLAYERS), dtype=int)
     max_bets = np.zeros(self.BATCH_SIZE, dtype=int)
     min_raise = np.zeros(self.BATCH_SIZE, dtype=int)
