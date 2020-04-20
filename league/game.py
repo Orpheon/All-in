@@ -1,5 +1,4 @@
 import numpy as np
-import random
 import pickle
 import treys
 
@@ -15,12 +14,14 @@ ALLIN = 3
 
 FULL_DECK = np.array(treys.Deck.GetFullDeck())
 
+
 class GameEngine:
-  def __init__(self, BATCH_SIZE, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND):
+  def __init__(self, BATCH_SIZE, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, logger):
     self.BATCH_SIZE = BATCH_SIZE
     self.INITIAL_CAPITAL = INITIAL_CAPITAL
     self.SMALL_BLIND = SMALL_BLIND
     self.BIG_BLIND = BIG_BLIND
+    self.logger = logger
     self.N_PLAYERS = 6
 
   def generate_cards(self):
@@ -32,16 +33,18 @@ class GameEngine:
     return community_cards, hole_cards
 
   def run_game(self, players):
+    self.logger.start_new_game(self.N_PLAYERS, self.BATCH_SIZE)
     if len(players) != self.N_PLAYERS:
       raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
 
     community_cards, hole_cards = self.generate_cards()
+    self.logger.set_cards(community_cards, hole_cards)
 
-    with open("tmp_cards.dump", "wb") as f:
-      pickle.dump((community_cards, hole_cards), f)
+    # with open("tmp_cards.dump", "wb") as f:
+    #  pickle.dump((community_cards, hole_cards), f)
 
-    with open("tmp_cards.dump", "rb") as f:
-      community_cards, hole_cards = pickle.load(f)
+    # with open("tmp_cards.dump", "rb") as f:
+    #  community_cards, hole_cards = pickle.load(f)
 
     still_playing = np.ones((self.BATCH_SIZE, len(players)))
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)))
@@ -84,6 +87,10 @@ class GameEngine:
     went_allin = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
     went_allin[allin_poolsize < self.INITIAL_CAPITAL * self.N_PLAYERS] = 1
     pots = np.minimum(pool[:, None], allin_poolsize)
+
+    print('still_playing', still_playing)
+    self.logger.set_last_players(still_playing)
+
     hand_scores = self.evaluate_hands(community_cards, hole_cards, still_playing + went_allin)
 
     # Now we face the actually not that easy task of splitting the pool by winners
@@ -105,7 +112,7 @@ class GameEngine:
       smallest_pots = np.min(pots, axis=1, initial=self.INITIAL_CAPITAL * self.N_PLAYERS + 1, where=(pots > 0))
       smallest_pots[smallest_pots > self.INITIAL_CAPITAL * self.N_PLAYERS] = 0
       # Add gains according to who won
-      gains = smallest_pots / n_splits_per_game
+      gains = smallest_pots // n_splits_per_game
       total_winnings += participants * gains[:, None]
       # Remove those players who have consumed their pools
       players_still_competing = (pots > smallest_pots[:, None])
@@ -116,15 +123,16 @@ class GameEngine:
 
     return total_winnings
 
-  def run_round(self, players, prev_round_investment, still_playing, allin_poolsize, round, hole_cards, community_cards):
+  def run_round(self, players, prev_round_investment, still_playing, allin_poolsize, round, hole_cards,
+                community_cards):
     """
     :param players: [Player]
     :param prev_round_investment: np.ndarray(batchsize, n_players) = float
     :param still_playing: np.ndarray(batchsize, n_players) int ∈ {0, 1}
     :param allin_poolsize: np.ndarray(batchsize) = float
     :param round: int ∈ {0..3}
-    :param hole_cards: np.ndarray(batchsize, n_players, 2) = int ∈ {0-51}
-    :param community_cards: np.ndarray(batchsize, n_players, {0,3,4,5}) = int ∈ {0-51}
+    :param hole_cards: np.ndarray(batchsize, n_players, 2) = int
+    :param community_cards: np.ndarray(batchsize, n_players, {0,3,4,5}) = int
     :return: (current_bets, allin_poolsize): np.ndarray(batchsize, n_players)=int {0-200}, np.array(batchsize)=int
     """
     current_bets = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
@@ -133,19 +141,24 @@ class GameEngine:
     min_raise[:] = self.BIG_BLIND
     current_allin_check = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
 
+    player_order = list(enumerate(players))
+
     if round == PRE_FLOP:
       current_bets[:, 0] = self.SMALL_BLIND
       current_bets[:, 1] = self.BIG_BLIND
       max_bets[:] = self.BIG_BLIND
+      player_order = player_order[2:] + player_order[:2]
 
     round_countdown = np.zeros(self.BATCH_SIZE)
     round_countdown[:] = self.N_PLAYERS
 
     while True:
       running_games = np.nonzero(round_countdown > 0)[0]
-      for player_idx, player in enumerate(players):
+
+      for player_idx, player in player_order:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment,
                                       hole_cards[:, player_idx, :], community_cards)
+        self.logger.add_action(round, player_idx, actions, amounts)
 
         round_countdown[running_games] -= 1
 
@@ -178,7 +191,7 @@ class GameEngine:
         raises = np.where(actions == RAISE)[0]
         if raises.size > 0:
           # print("True raises", raises, amounts[raises])
-          investment = np.maximum(current_bets[raises, player_idx] + amounts[raises], max_bets[raises] + min_raise[raises])
+          investment = np.maximum(current_bets[raises, player_idx] + amounts[raises],max_bets[raises] + min_raise[raises])
           # Isolate all the games where someone had just gone allin and save for them the sidepool
           sidepool_indices = np.nonzero(current_allin_check[raises, :])
           # print(current_allin_check)
@@ -190,7 +203,7 @@ class GameEngine:
           # Reset the bets and countdown
           max_bets[raises] = investment
           current_bets[raises, player_idx] = investment
-          round_countdown[raises] = len(players)
+          round_countdown[raises] = self.N_PLAYERS-1
 
         ###########
         # CALLING #
@@ -232,7 +245,6 @@ class GameEngine:
 
         if np.sum(round_countdown[running_games]) <= 0:
           return current_bets, allin_poolsize
-
 
   def evaluate_hands(self, community_cards, hole_cards, contenders):
     evaluator = treys.Evaluator()
