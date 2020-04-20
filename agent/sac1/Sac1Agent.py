@@ -23,9 +23,9 @@ class Sac1Agent(BaseAgent):
     self.N_PLAYERS = n_players
 
     # 5 community cards x 53 (52 cards + "unknown") + 2 holecards x 52,
-    # (1 position in this round + 1 folded + 1 allined + 1 pot investment total + 1 pot investment this round + 1 which player last raised) x 6
+    # (1 position in this round + 1 folded + 1 pot investment total + 1 pot investment this round + 1 which player last raised) x 6
     # round x 4 (1h) + min_bet
-    self.obs_dim = (5) * 53 + (2) * 52 + (1 + 1 + 1 + 1 + 1 + 1) * 6 + (1) * 5 + 1
+    self.obs_dim = (5) * 53 + (2) * 52 + (1 + 1 + 1 + 1 + 1) * 6 + (1) * 5 + 1
     # Target value (mean and stddev of call ceiling, mean and stddev of raise ceiling)
     self.act_dim = 4
 
@@ -42,8 +42,9 @@ class Sac1Agent(BaseAgent):
     self.policy_optimizer = torch.optim.Adam(self.policy.parameters(), lr=self.config['learning_rate'])
     self.qfn_optimizer = torch.optim.Adam(self.qfn.parameters(), lr=self.config['learning_rate'])
 
-  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, allined, last_raiser, hole_cards, community_cards):
-    state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded, allined,
+  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, allined, last_raiser,
+          hole_cards, community_cards):
+    state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
 
     actions = np.random.randint(0, 3, min_raise.size).astype("float")
@@ -60,11 +61,12 @@ class Sac1Agent(BaseAgent):
   def spawn_executor(self):
     pass
 
-  def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, allined,
+  def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                           last_raiser, hole_cards, community_cards):
     # First convert the treys card IDs into indices
     hole_cards_converted = 13 * np.log2(np.right_shift(hole_cards, 12) & 0xF) + (np.right_shift(hole_cards, 8) & 0xF)
-    community_cards_converted = 13 * np.log2(np.right_shift(community_cards, 12) & 0xF) + (np.right_shift(community_cards, 8) & 0xF)
+    community_cards_converted = 13 * np.log2(np.right_shift(community_cards, 12) & 0xF) + (
+      np.right_shift(community_cards, 8) & 0xF)
     # Then convert those indices into 1h
     hole_cards_1h = (np.arange(52) == hole_cards_converted[..., None] - 1).astype(int)
     known_community_cards_1h = (np.arange(53) == community_cards_converted[..., None] - 1).astype(int)
@@ -73,19 +75,17 @@ class Sac1Agent(BaseAgent):
     missing_community_cards[:, :, -1] = 1
     community_cards_1h = np.concatenate((known_community_cards_1h, missing_community_cards), axis=1)
 
-    player_data = np.zeros((self.BATCH_SIZE, 6, self.N_PLAYERS))
+    player_data = np.zeros((self.BATCH_SIZE, 5, self.N_PLAYERS))
     # Which player are we
     player_data[:, 0, player_idx] = 1
     # Who folded already
     player_data[:, 1, :] = folded
-    # Who allin-ed already
-    player_data[:, 2, :] = allined
     # Who put how much total into the pot
-    player_data[:, 3, :] = (prev_round_investment + current_bets) / self.INITAL_CAPITAL
+    player_data[:, 2, :] = (prev_round_investment + current_bets) / self.INITAL_CAPITAL
     # Who put how much this round
-    player_data[:, 4, :] = (current_bets) / self.INITAL_CAPITAL
+    player_data[:, 3, :] = (current_bets) / self.INITAL_CAPITAL
     # Who was the last to raise
-    player_data[:, 5, last_raiser] = 1
+    player_data[:, 4, last_raiser] = 1
     print(player_data)
 
     tail_data = np.zeros((self.BATCH_SIZE, 5 + 1))
@@ -96,7 +96,7 @@ class Sac1Agent(BaseAgent):
                                     community_cards_1h.reshape(self.BATCH_SIZE, -1),
                                     player_data.reshape(self.BATCH_SIZE, -1), tail_data.reshape(self.BATCH_SIZE, -1)),
                                    axis=1)
-    assert(network_input.shape[1] == self.obs_dim)
+    assert (network_input.shape[1] == self.obs_dim)
 
     return network_input
 

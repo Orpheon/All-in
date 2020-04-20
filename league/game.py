@@ -77,7 +77,7 @@ class GameEngine:
     # Get the number of times each pot will be split
     n_splits_per_game = participants.sum(axis=1)
     # Split and distribute the money
-    gains = pool.astype(float) / n_splits_per_game
+    gains = pool.astype(float) // n_splits_per_game
     total_winnings += participants * gains[:, None]
 
     total_winnings -= prev_round_investment

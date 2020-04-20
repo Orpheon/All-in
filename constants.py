@@ -6,4 +6,3 @@ RIVER = 3
 FOLD = 0
 CALL = 1
 RAISE = 2
-ALLIN = 3
