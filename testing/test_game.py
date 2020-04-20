@@ -61,6 +61,8 @@ class MockPlayer(LeagueTestBot):
   def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, hole_cards, community_cards):
     return self.action_provider.next_action()
 
+  def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards, community_cards, gains):
+    pass
 
 if __name__ == '__main__':
   #
