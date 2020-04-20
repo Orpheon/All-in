@@ -7,7 +7,7 @@ class Logger:
   hole_cards = None
   community_cards = None
   action_history = []
-  still_playing = None
+  folded = None
 
   def __init__(self, path):
     self.path = path
@@ -16,6 +16,7 @@ class Logger:
     self.hole_cards = None
     self.community_cards = None
     self.action_history = []
+    self.folded = []
 
   def set_cards(self, community_cards, hole_cards):
     if self.community_cards is not None: raise PermissionError()
@@ -23,14 +24,14 @@ class Logger:
     self.community_cards = np.copy(community_cards)
     self.hole_cards = np.copy(hole_cards)
 
-  def add_action(self, round, player_idx, actions, amounts):
-    #print({'round': round, 'player_idx': player_idx, 'actions': np.copy(actions),
-    #       'amounts': np.copy(amounts)})
+  def add_action(self, round, player_idx, actions, amounts, round_countdown):
+    print({'round': round, 'player_idx': player_idx, 'actions': np.copy(actions),
+           'amounts': np.copy(amounts), 'round_countdown': np.copy(round_countdown)})
     self.action_history.append({'round': round, 'player_idx': player_idx, 'actions': np.copy(actions),
-                                'amounts': np.copy(amounts)})
+                                'amounts': np.copy(amounts), 'round_countdown': np.copy(round_countdown)})
 
-  def set_last_players(self, still_playing):
-    self.still_playing = np.copy(still_playing)
+  def append_folded(self, after_round, folded):
+    self.folded.append((after_round, np.copy(folded)))
 
   def save_to_file(self):
     with open(self.path, 'w') as f:

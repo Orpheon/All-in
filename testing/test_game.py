@@ -24,7 +24,7 @@ def cards_ids_from_strings(card_strings):
   return [id_from_string(card_string) for card_string in card_strings]
 
 
-action_ids = {'FOLD': 0.0, 'CALL': 1.0, 'RAISE': 2.0, 'ALLIN': 3.0}
+action_ids = {'FOLD': 0, 'CALL': 1, 'RAISE': 2, 'ALLIN': 3}
 
 
 def action_id_from_str(action_str):
@@ -50,7 +50,8 @@ class ActionProvider:
 
   def next_action(self):
     self.idx += 1
-    return self.actions[self.idx, :], self.amounts[self.idx, :]
+    return self.actions[self.idx][0], self.amounts[self.idx][0],\
+           np.array(self.actions[self.idx][1]), np.array(self.amounts[self.idx][1])
 
 
 class MockPlayer(LeagueTestBot):
@@ -58,15 +59,24 @@ class MockPlayer(LeagueTestBot):
     super().__init__()
     self.action_provider = action_provider
 
-  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, hole_cards, community_cards):
-    return self.action_provider.next_action()
+  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards,
+          community_cards):
+    p_idx_action, p_idx_amount, actions, amounts = self.action_provider.next_action()
+    print(p_idx_action, p_idx_amount, player_idx)
+    return actions, amounts
+
+  def start_game(self, batch_size, initial_capital, n_players):
+    pass
+
+  def round_end(self, player_idx, round, current_bets, min_raise, prev_round_investment, hole_cards, community_cards):
+    pass
 
 
 if __name__ == '__main__':
   #
   # config
   #
-  N_TESTCASES = 1
+  N_TESTCASES = 3
   INITIAL_CAPITAL = 200
   SMALL_BLIND = 1
   BIG_BLIND = 2
@@ -81,7 +91,7 @@ if __name__ == '__main__':
 
   print(f"Start evaluating {poker_config.evaluations} hands")
   start = time.time()
-  #  result = poker_config.run_evaluation()
+  _ = poker_config.run_evaluation()
   end = time.time()
   time_taken = end - start
   print('Evaluation Time: ', time_taken)
@@ -130,9 +140,9 @@ if __name__ == '__main__':
 
   for round in ['preflop', 'flop', 'turn', 'river']:
     action_histories = [hand['round_state']['action_histories'].get(round, []) for hand_idx, hand in sorted_results]
-    action_histories_no_blinds = [
-      [action for action in action_hist if action['action'] != 'SMALLBLIND' and action['action'] != 'BIGBLIND']
-      for action_hist in action_histories]
+    action_histories_no_blinds = [[action for action in action_hist
+                                   if action['action'] != 'SMALLBLIND' and action['action'] != 'BIGBLIND']
+                                  for action_hist in action_histories]
     action_pointer = [0 for _ in sorted_results]
     action_max = [len(act_hist) for act_hist in action_histories_no_blinds]
     agent_idx = 2 if round == 'preflop' else 0
@@ -140,9 +150,10 @@ if __name__ == '__main__':
     round_actions = []
     round_amounts = []
 
+    round_countdown = N_PLAYERS
     while action_pointer != action_max:
-
-      actions = ['FOLD'] * len(sorted_results)
+      round_countdown -= 1
+      actions = ['CALL'] * len(sorted_results)
       amounts = [0] * len(sorted_results)
 
       for hand_idx, hand in sorted_results:
@@ -153,28 +164,30 @@ if __name__ == '__main__':
             amounts[hand_idx] = action.get('paid', 0)
             action_pointer[hand_idx] += 1
 
-      agent_idx = (agent_idx + 1) % N_PLAYERS
-      round_actions.append([action_id_from_str(a) for a in actions])
-      round_amounts.append(amounts)
+      if any(a == 'RAISE' for a in actions[1]): round_countdown = N_PLAYERS - 1
 
-    shortest_possible_round = 6
-    for _ in range(shortest_possible_round-len(round_actions)):
-      actions = ['FOLD'] * len(sorted_results)
+      round_actions.append((agent_idx, [action_id_from_str(a) for a in actions]))
+      round_amounts.append((agent_idx, amounts))
+      agent_idx = (agent_idx + 1) % N_PLAYERS
+
+    for _ in range(round_countdown):
+      actions = [action_id_from_str('CALL') for _ in sorted_results]
       amounts = [0] * len(sorted_results)
-      round_actions.append([action_id_from_str(a) for a in actions])
-      round_amounts.append(amounts)
+      round_actions.append((agent_idx, actions))
+      round_amounts.append((agent_idx, amounts))
+      agent_idx = (agent_idx + 1) % N_PLAYERS
 
     all_actions.extend(round_actions)
     all_amounts.extend(round_amounts)
 
-  all_actions.append([action_id_from_str(i) for i in ['FOLD'] * len(sorted_results)])
-  all_amounts.append([0] * len(sorted_results))
+  #all_actions.append([action_id_from_str(i) for i in ['FOLD'] * len(sorted_results)])
+  #all_amounts.append([0] * len(sorted_results))
 
-  all_actions = np.array(all_actions)
-  all_amounts = np.array(all_amounts)
+  #all_actions = np.array(all_actions)
+  #all_amounts = np.array(all_amounts)
 
   # calculate winnings
-  winnings = np.array([[0.0 for _ in range(N_PLAYERS)] for _ in range(N_TESTCASES)])
+  winnings = np.array([[0 for _ in range(N_PLAYERS)] for _ in range(N_TESTCASES)])
   for round_idx, info in sorted_results:
     for seat in info['round_state']['seats']:
       for seat_idx, uuid in enumerate(seats_each_round_fixed[round_idx]):
@@ -187,11 +200,11 @@ if __name__ == '__main__':
   print('hole_hands')
   print(hole_hands.shape)
   '''
-  #print('all_actions')
-  #print(all_actions)
-  #print('all_amounts')
-  #print(all_amounts)
-  #print(np.concatenate((all_actions, all_amounts),axis=1))
+  # print('all_actions')
+  # print(all_actions)
+  # print('all_amounts')
+  # print(all_amounts)
+  # print(np.concatenate((all_actions, all_amounts),axis=1))
 
   #
   # setup test environment
@@ -203,19 +216,23 @@ if __name__ == '__main__':
   PLAYERS = [MockPlayer(action_provider) for _ in range(N_PLAYERS)]
   rv = mock_game_engine.run_game(PLAYERS)
 
+  passed = 0
   for i in range(N_TESTCASES):
+    passed += all(winnings[i, :] == rv[i, :])
     print('pypoke', winnings[i, :])
     print('vector', rv[i, :])
+  print('{0}/{1}'.format(passed, N_TESTCASES))
 
-  print(logger.hole_cards)
-  print(logger.community_cards)
+  # print(logger.hole_cards)
+  # print(logger.community_cards)
 
-  print(np.array([[[treys.Card.print_pretty_cards(player)] for player in batch]
-                  for batch in logger.hole_cards.tolist()]))
-  print(np.array([treys.Card.print_pretty_cards(batch)
-                  for batch in logger.community_cards.tolist()]))
+#  print(np.array([[[treys.Card.print_pretty_cards(player)] for player in batch]
+#                  for batch in logger.hole_cards.tolist()]))
+#  print(np.array([treys.Card.print_pretty_cards(batch)
+#                  for batch in logger.community_cards.tolist()]))
 
-  for a in logger.action_history:
-    print(a)
+#  for a in logger.action_history:
+#    print(a)
 
-  print(logger.still_playing)
+#  for f in logger.folded:
+#    print(f)
