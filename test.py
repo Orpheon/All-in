@@ -2,6 +2,7 @@ import league.game
 import numpy as np
 import treys
 import time
+from league.logger import DummyLogger
 from agent.sac1.Sac1Agent import Sac1Agent
 
 class Player:
@@ -30,7 +31,7 @@ class Player:
 
 
 batch_size = 10000
-game = league.game.GameEngine(BATCH_SIZE=batch_size, INITIAL_CAPITAL=100, SMALL_BLIND=2, BIG_BLIND=4)
+game = league.game.GameEngine(BATCH_SIZE=batch_size, INITIAL_CAPITAL=100, SMALL_BLIND=2, BIG_BLIND=4, logger=DummyLogger())
 t1 = time.time()
 scores = game.run_game([Player(), Player(), Player(), Player(), Player(), Player()])
 # scores = game.run_game([Sac1Agent(agent_id=1, config={'learning_rate': 0.01}), Player(), Player(), Player(), Player(), Player()])
