@@ -12,7 +12,7 @@ locale.setlocale(locale.LC_ALL, '')
 
 class CashGameConfig():
 
-    def __init__(self, small_blind_amount: int = 1, evaluations: int = 1000000, log_file_location: str = './logs'):
+    def __init__(self, small_blind_amount: int = 1, evaluations: int = 1000000, log_file_location: str = './logs/log.json'):
         """
         Setup a new CashGame
         :param small_blind_amount: int. Specify small blind
@@ -20,14 +20,13 @@ class CashGameConfig():
         :param log_file_location: str. location for a detailed log file.
         """
         now = datetime.strftime(datetime.now(), "%Y-%m-%d_%H%M%S")
-        self.log_file_location = os.path.join(log_file_location, f"evaluation_{now}.json")
+        self.log_file_location = log_file_location
         self.initial_stack = 100 * small_blind_amount * 2
         self.config = setup_config(max_round=evaluations, initial_stack=self.initial_stack,
                                    small_blind_amount=small_blind_amount)
         self.evaluations = evaluations
         self.player_final_stack = {}
-        self.baselines = [BaselinePokerPlayer.BaselinePlayer, CallBaselinePokerPlayer.CallBaselinePlayer,
-                          RandomPokerPlayer.RandomPlayer]
+        self.baselines = []
 
     def run_evaluation(self, verbose: int = 0) -> Dict[str, int]:
         if len(self.config.players_info) <= 1:
@@ -37,7 +36,7 @@ class CashGameConfig():
 
         # Prettify game result:
         for player in game_result['players']:
-            self.player_final_stack[player['name']] = player['cashgame_stack']
+            self.player_final_stack[player['uuid']] = player['cashgame_stack']
         self.player_final_stack = {k: v for k, v in
                                    sorted(self.player_final_stack.items(), key=lambda item: item[1], reverse=True)}
 
