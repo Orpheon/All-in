@@ -3,7 +3,7 @@ import torch
 
 class Policy(torch.nn.Module):
   def __init__(self, obs_dim, act_dim):
-    super(Policy).__init__()
+    super(Policy, self).__init__()
 
     self.net = torch.nn.Sequential(
       torch.nn.Linear(obs_dim, obs_dim),
@@ -17,7 +17,7 @@ class Policy(torch.nn.Module):
 
 class Qfn(torch.nn.Module):
   def __init__(self, obs_dim):
-    super(Qfn).__init__()
+    super(Qfn, self).__init__()
 
     self.net = torch.nn.Sequential(
       torch.nn.Linear(obs_dim, obs_dim),
