@@ -174,7 +174,7 @@ class GameEngine:
 
         # print("Bets after turn", current_bets[:, player_idx])
 
-        if np.sum(round_countdown[running_games]) <= 0:
+        if np.max(round_countdown[running_games]) <= 0:
           return current_bets
 
   def evaluate_hands(self, community_cards, hole_cards, contenders):
