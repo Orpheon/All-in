@@ -16,15 +16,19 @@ class GameEngine:
     self.BIG_BLIND = BIG_BLIND
     self.N_PLAYERS = 6
 
-  def run_game(self, players):
-    if len(players) != self.N_PLAYERS:
-      raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
-
+  def generate_cards(self):
     cards = np.tile(np.arange(52), (self.BATCH_SIZE, 1))
     for i in range(self.BATCH_SIZE):
       cards[i, :] = FULL_DECK[np.random.permutation(cards[i, :])]
     community_cards = cards[:, :5]
-    hole_cards = np.reshape(cards[:, 5:5 + 2 * len(players)], (self.BATCH_SIZE, len(players), 2))
+    hole_cards = np.reshape(cards[:, 5:5 + 2 * self.N_PLAYERS], (self.BATCH_SIZE, self.N_PLAYERS, 2))
+    return community_cards, hole_cards
+
+  def run_game(self, players):
+    if len(players) != self.N_PLAYERS:
+      raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
+
+    community_cards, hole_cards = self.generate_cards()
 
     with open("tmp_cards.dump", "wb") as f:
       pickle.dump((community_cards, hole_cards), f)
