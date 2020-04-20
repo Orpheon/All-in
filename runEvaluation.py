@@ -8,12 +8,13 @@ import pickle
 import numpy as np
 import treys
 
-N_TESTCASES = 100
+N_TESTCASES = 10000
 
 from baseline.ConsolePokerPlayer import ConsolePlayer
 from configuration.CashGameConfig import CashGameConfig
 from agent.MyBot import MyBotPlayer
 from agent.LeagueTestBot import LeagueTestBot
+from agent.random.RandomAgent import RandomAgent
 
 parser = argparse.ArgumentParser(description='Run poker evaluation')
 parser.add_argument('--config', help='Config file')
@@ -57,12 +58,12 @@ if __name__ == '__main__':
   else:
     # Use this for manual evaluation
     poker_config = CashGameConfig(evaluations=N_TESTCASES, log_file_location="leaguetestlog.json")
-    poker_config.register_player("LeagueTestBot", LeagueTestBot())
-    poker_config.register_player("LeagueTestBot", LeagueTestBot())
-    poker_config.register_player("LeagueTestBot", LeagueTestBot())
-    poker_config.register_player("LeagueTestBot", LeagueTestBot())
-    poker_config.register_player("LeagueTestBot", LeagueTestBot())
-    poker_config.register_player("LeagueTestBot", LeagueTestBot())
+    poker_config.register_player("RandomAgent", RandomAgent(1, ''))
+    poker_config.register_player("RandomAgent", RandomAgent(2, ''))
+    poker_config.register_player("RandomAgent", RandomAgent(3, ''))
+    poker_config.register_player("RandomAgent", RandomAgent(4, ''))
+    poker_config.register_player("RandomAgent", RandomAgent(5, ''))
+    poker_config.register_player("RandomAgent", RandomAgent(6, ''))
     # poker_config.add_all_available_baselines()
 
   print(f"Start evaluating {poker_config.evaluations} hands")
@@ -77,14 +78,14 @@ if __name__ == '__main__':
   hole_cards = np.ndarray((N_TESTCASES, 6, 2), dtype=int)
   gains = np.ndarray((N_TESTCASES, 6), dtype=int)
 
-  with open("leaguetestlog.json", "r") as f:
-    results = json.load(f)
-  # Apparently stuff is sorted by keys here, I do not have the slightest idea why
-
-  with open("leaguetestlog_readable.json", "w") as f:
-    json.dump(results, f, sort_keys=True, indent=2)
-
-  for k,v in results.items():
+  # with open("leaguetestlog.json", "r") as f:
+  #   results = json.load(f)
+  # # Apparently stuff is sorted by keys here, I do not have the slightest idea why
+  #
+  # with open("leaguetestlog_readable.json", "w") as f:
+  #   json.dump(results, f, sort_keys=True, indent=2)
+  #
+  # for k,v in results.items():
 
 
 

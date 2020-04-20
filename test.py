@@ -33,6 +33,7 @@ class Player:
 batch_size = 10000
 game = league.game.GameEngine(BATCH_SIZE=batch_size, INITIAL_CAPITAL=100, SMALL_BLIND=2, BIG_BLIND=4, logger=DummyLogger())
 t1 = time.time()
-scores = game.run_game([Sac1Agent(agent_id=1, config={'learning_rate': 0.01}), Player(), Player(), Player(), Player(), Player()])
+scores = game.run_game([Player(), Player(), Player(), Player(), Player(), Player()])
+# scores = game.run_game([Sac1Agent(agent_id=1, config={'learning_rate': 0.01}), Player(), Player(), Player(), Player(), Player()])
 t2 = time.time()
 print("{0} games (computed in {2} seconds):\nMean: {1}\nMedian: {3}".format(batch_size, scores.mean(axis=0), t2 - t1, np.median(scores, axis=0)))
