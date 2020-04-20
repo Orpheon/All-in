@@ -48,28 +48,28 @@ class GameEngine:
     print("PREFLOP")
 
     # Pre-flop
-    bets = self.run_round(players, prev_round_investment, folded, PRE_FLOP, hole_cards, community_cards[:, :0])
+    bets, _ = self.run_round(players, prev_round_investment, folded, PRE_FLOP, hole_cards, community_cards[:, :0])
     prev_round_investment += bets
     self.logger.append_folded('PREFLOP', folded)
 
     print("FLOP")
 
     # Flop
-    bets = self.run_round(players, prev_round_investment, folded, FLOP, hole_cards, community_cards[:, :3])
+    bets, _ = self.run_round(players, prev_round_investment, folded, FLOP, hole_cards, community_cards[:, :3])
     prev_round_investment += bets
     self.logger.append_folded('FLOP', folded)
 
     print("TURN")
 
     # Turn
-    bets = self.run_round(players, prev_round_investment, folded, TURN, hole_cards, community_cards[:, :4])
+    bets, _ = self.run_round(players, prev_round_investment, folded, TURN, hole_cards, community_cards[:, :4])
     prev_round_investment += bets
     self.logger.append_folded('TURN', folded)
 
     print("RIVER")
 
     # River
-    bets = self.run_round(players, prev_round_investment, folded, RIVER, hole_cards, community_cards)
+    bets, end_state = self.run_round(players, prev_round_investment, folded, RIVER, hole_cards, community_cards)
     prev_round_investment += bets
     self.logger.append_folded('RIVER', folded)
 
@@ -93,6 +93,9 @@ class GameEngine:
     total_winnings += participants * gains[:, None]
 
     total_winnings -= prev_round_investment
+
+    for player_idx, player in enumerate(players):
+      player.end_trajectory(*end_state, total_winnings[:, player_idx])
 
     return total_winnings
 
@@ -176,7 +179,8 @@ class GameEngine:
         # print("Bets after turn", current_bets[:, player_idx])
 
         if np.max(round_countdown[running_games]) <= 0:
-          return current_bets
+          return current_bets, (player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
+                                hole_cards[:, player_idx, :], community_cards)
 
   def evaluate_hands(self, community_cards, hole_cards, contenders):
     evaluator = treys.Evaluator()
