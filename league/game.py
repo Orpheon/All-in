@@ -50,26 +50,31 @@ class GameEngine:
     # Pre-flop
     bets, _ = self.run_round(players, prev_round_investment, folded, PRE_FLOP, hole_cards, community_cards[:, :0])
     prev_round_investment += bets
+    self.logger.append_folded('PREFLOP', folded)
 
     print("FLOP")
 
     # Flop
     bets, _ = self.run_round(players, prev_round_investment, folded, FLOP, hole_cards, community_cards[:, :3])
     prev_round_investment += bets
+    self.logger.append_folded('FLOP', folded)
 
     print("TURN")
 
     # Turn
     bets, _ = self.run_round(players, prev_round_investment, folded, TURN, hole_cards, community_cards[:, :4])
     prev_round_investment += bets
+    self.logger.append_folded('TURN', folded)
 
     print("RIVER")
 
     # River
     bets, end_state = self.run_round(players, prev_round_investment, folded, RIVER, hole_cards, community_cards)
     prev_round_investment += bets
+    self.logger.append_folded('RIVER', folded)
 
     print("SHOWDOWN")
+
 
     # Showdown
     pool = np.sum(prev_round_investment, axis=1)
@@ -127,11 +132,9 @@ class GameEngine:
       for player_idx, player in player_order:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                       last_raiser, hole_cards[:, player_idx, :], community_cards)
-        self.logger.add_action(round, player_idx, actions, amounts)
-
-        round_countdown[running_games] -= 1
-
+        self.logger.add_action(round, player_idx, actions, amounts, round_countdown, folded[:, player_idx])
         actions[folded[:, player_idx] == 1] = FOLD
+
 
         # print("Player", player_idx)
         # print("Actions", actions)
@@ -140,8 +143,7 @@ class GameEngine:
         # CALLING #
         ###########
 
-        # Handle the real checks
-        calls = np.where(actions == CALL)[0]
+        calls = np.where(np.logical_and(round_countdown > 0, actions == CALL))[0]
         if calls.size > 0:
           # print("True calls", calls)
           investment = max_bets[calls]
@@ -153,23 +155,7 @@ class GameEngine:
         # RAISING #
         ###########
 
-        # If player wants to raise, first set the action of all those that can't afford it to all-in, then raise the remainder and reset round counter
-        false_raises = np.where(
-          np.logical_and(
-            actions == RAISE,
-            max_bets + min_raise > self.INITIAL_CAPITAL - prev_round_investment[:, player_idx]
-          )
-        )[0]
-        if false_raises.size > 0:
-          # print("False raises", false_raises)
-          # All of these players can't afford to raise properly, so they do a false raise and all-in
-          actions[false_raises] = CALL
-          investment = self.INITIAL_CAPITAL - prev_round_investment[false_raises, player_idx]
-          max_bets[false_raises] = np.maximum(investment, max_bets[false_raises])
-          current_bets[false_raises, player_idx] = investment
-
-        # Handle the real raises
-        raises = np.where(actions == RAISE)[0]
+        raises = np.where(np.logical_and(round_countdown > 0, actions == RAISE))[0]
         if raises.size > 0:
           # print("True raises", raises, amounts[raises])
           investment = np.maximum(current_bets[raises, player_idx] + amounts[raises], max_bets[raises] + min_raise[raises])
@@ -178,7 +164,7 @@ class GameEngine:
           # Reset the bets and countdown
           max_bets[raises] = investment
           current_bets[raises, player_idx] = investment
-          round_countdown[raises] = self.N_PLAYERS - 1
+          round_countdown[raises] = self.N_PLAYERS
           last_raiser[raises] = player_idx
 
         ###########
@@ -186,11 +172,13 @@ class GameEngine:
         ###########
 
         folded[np.where(np.logical_and(round_countdown > 0, actions == FOLD))[0], player_idx] = 1
-        round_countdown[folded.sum(axis=1) == self.N_PLAYERS] = 0
+        round_countdown[running_games] -= 1
+        #TODO: if all folded stops game, improves performance but breaks tests
+        #round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
 
         # print("Bets after turn", current_bets[:, player_idx])
 
-        if np.sum(round_countdown[running_games]) <= 0:
+        if np.max(round_countdown[running_games]) <= 0:
           return current_bets, (player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                                 hole_cards[:, player_idx, :], community_cards)
 
