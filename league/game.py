@@ -32,8 +32,8 @@ class GameEngine:
     with open("tmp_cards.dump", "rb") as f:
       community_cards, hole_cards = pickle.load(f)
 
-    folded = np.zeros((self.BATCH_SIZE, len(players)))
-    prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)))
+    folded = np.zeros((self.BATCH_SIZE, len(players)), dtype=bool)
+    prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)), dtype=int)
 
     for player in players:
       player.start_game(self.BATCH_SIZE, self.INITIAL_CAPITAL, self.N_PLAYERS)
@@ -66,7 +66,7 @@ class GameEngine:
 
     # Showdown
     pool = np.sum(prev_round_investment, axis=1)
-    total_winnings = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
+    total_winnings = np.zeros((self.BATCH_SIZE, self.N_PLAYERS), dtype=int)
 
     hand_scores = self.evaluate_hands(community_cards, hole_cards, np.logical_not(folded))
 
@@ -77,7 +77,7 @@ class GameEngine:
     # Get the number of times each pot will be split
     n_splits_per_game = participants.sum(axis=1)
     # Split and distribute the money
-    gains = pool.astype(float) // n_splits_per_game
+    gains = pool // n_splits_per_game
     total_winnings += participants * gains[:, None]
 
     total_winnings -= prev_round_investment
@@ -85,9 +85,9 @@ class GameEngine:
     return total_winnings
 
   def run_round(self, players, prev_round_investment, folded, round, hole_cards, community_cards):
-    current_bets = np.zeros((self.BATCH_SIZE, self.N_PLAYERS))
-    max_bets = np.zeros(self.BATCH_SIZE)
-    min_raise = np.zeros(self.BATCH_SIZE)
+    current_bets = np.zeros((self.BATCH_SIZE, self.N_PLAYERS), dtype=int)
+    max_bets = np.zeros(self.BATCH_SIZE, dtype=int)
+    min_raise = np.zeros(self.BATCH_SIZE, dtype=int)
     min_raise[:] = self.BIG_BLIND
     last_raiser = np.zeros(self.BATCH_SIZE, dtype=int)
 
@@ -96,7 +96,7 @@ class GameEngine:
       current_bets[:, 1] = self.BIG_BLIND
       max_bets[:] = self.BIG_BLIND
 
-    round_countdown = np.zeros(self.BATCH_SIZE)
+    round_countdown = np.zeros(self.BATCH_SIZE, dtype=int)
     round_countdown[:] = self.N_PLAYERS
 
     while True:

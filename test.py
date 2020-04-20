@@ -17,8 +17,8 @@ class Player:
     # for hand in community_cards.tolist():
     #   print("\t"+treys.Card.print_pretty_cards(hand))
     self.rng.seed(hole_cards.sum(axis=-1))
-    actions = self.rng.randint(0, 3, min_raise.size).astype("float")
-    amounts = self.rng.rand(min_raise.size) * 5
+    actions = self.rng.randint(0, 3, min_raise.size).astype(int)
+    amounts = (self.rng.rand(min_raise.size) * 5).astype(int)
 
     return actions, amounts
 
