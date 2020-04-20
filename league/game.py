@@ -129,9 +129,9 @@ class GameEngine:
       for player_idx, player in player_order:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                       last_raiser, hole_cards[:, player_idx, :], community_cards)
-        self.logger.add_action(round, player_idx, actions, amounts, round_countdown)
-
+        self.logger.add_action(round, player_idx, actions, amounts, round_countdown, folded[:, player_idx])
         actions[folded[:, player_idx] == 1] = FOLD
+
 
         # print("Player", player_idx)
         # print("Actions", actions)
@@ -170,7 +170,8 @@ class GameEngine:
 
         folded[np.where(np.logical_and(round_countdown > 0, actions == FOLD))[0], player_idx] = 1
         round_countdown[running_games] -= 1
-        round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
+        #TODO: if all folded stops game, improves performance but breaks tests
+        #round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
 
         # print("Bets after turn", current_bets[:, player_idx])
 

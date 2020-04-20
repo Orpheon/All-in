@@ -2,6 +2,15 @@ import json
 
 import numpy as np
 
+class DummyLogger:
+
+  def __init__(self): pass
+  def start_new_game(self, players, batch_size): pass
+  def set_cards(self, community_cards, hole_cards): pass
+  def add_action(self, round, player_idx, actions, amounts, round_countdown, folded): pass
+  def append_folded(self, after_round, folded): pass
+  def save_to_file(self): pass
+
 
 class Logger:
   hole_cards = None
@@ -24,13 +33,15 @@ class Logger:
     self.community_cards = np.copy(community_cards)
     self.hole_cards = np.copy(hole_cards)
 
-  def add_action(self, round, player_idx, actions, amounts, round_countdown):
+  def add_action(self, round, player_idx, actions, amounts, round_countdown, folded):
     print({'round': round, 'player_idx': player_idx, 'actions': np.copy(actions),
-           'amounts': np.copy(amounts), 'round_countdown': np.copy(round_countdown)})
+           'amounts': np.copy(amounts), 'round_countdown': np.copy(round_countdown), 'folded': folded})
     self.action_history.append({'round': round, 'player_idx': player_idx, 'actions': np.copy(actions),
-                                'amounts': np.copy(amounts), 'round_countdown': np.copy(round_countdown)})
+                                'amounts': np.copy(amounts), 'round_countdown': np.copy(round_countdown),
+                                'folded': np.copy(folded)})
 
   def append_folded(self, after_round, folded):
+    print(after_round, np.copy(folded))
     self.folded.append((after_round, np.copy(folded)))
 
   def save_to_file(self):

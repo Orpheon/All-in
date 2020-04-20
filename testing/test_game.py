@@ -6,7 +6,7 @@ import treys
 from agent.LeagueTestBot import LeagueTestBot
 from configuration.CashGameConfig import CashGameConfig
 from league.game import GameEngine
-from league.logger import Logger
+from league.logger import Logger, DummyLogger
 
 import numpy as np
 
@@ -62,7 +62,8 @@ class MockPlayer(LeagueTestBot):
   def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards,
           community_cards):
     p_idx_action, p_idx_amount, actions, amounts = self.action_provider.next_action()
-    print(p_idx_action, p_idx_amount, player_idx)
+    #TODO
+    #print(p_idx_action, p_idx_amount, player_idx)
     return actions, amounts
 
   def start_game(self, batch_size, initial_capital, n_players):
@@ -76,7 +77,7 @@ if __name__ == '__main__':
   #
   # config
   #
-  N_TESTCASES = 3
+  N_TESTCASES = 1000
   INITIAL_CAPITAL = 200
   SMALL_BLIND = 1
   BIG_BLIND = 2
@@ -164,7 +165,7 @@ if __name__ == '__main__':
             amounts[hand_idx] = action.get('paid', 0)
             action_pointer[hand_idx] += 1
 
-      if any(a == 'RAISE' for a in actions[1]): round_countdown = N_PLAYERS - 1
+      if any(a == 'RAISE' for a in actions): round_countdown = N_PLAYERS-1
 
       round_actions.append((agent_idx, [action_id_from_str(a) for a in actions]))
       round_amounts.append((agent_idx, amounts))
@@ -194,12 +195,10 @@ if __name__ == '__main__':
         if uuid == seat['uuid']:
           winnings[round_idx][seat_idx] = seat['stack'] - 200
 
-  '''
-  print('community_cards')
-  print(community_cards.shape)
-  print('hole_hands')
-  print(hole_hands.shape)
-  '''
+  #print('community_cards')
+  #print(community_cards.shape)
+  #print('hole_hands')
+  #print(hole_hands.shape)
   # print('all_actions')
   # print(all_actions)
   # print('all_amounts')
@@ -209,7 +208,8 @@ if __name__ == '__main__':
   #
   # setup test environment
   #
-  logger = Logger('testoutput.json')
+  #logger = Logger('testoutput.json')
+  logger = DummyLogger()
   mock_game_engine = MockGameEngine(N_TESTCASES, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, community_cards,
                                     hole_hands, logger)
   action_provider = ActionProvider(all_actions, all_amounts)
@@ -219,8 +219,8 @@ if __name__ == '__main__':
   passed = 0
   for i in range(N_TESTCASES):
     passed += all(winnings[i, :] == rv[i, :])
-    print('pypoke', winnings[i, :])
-    print('vector', rv[i, :])
+    #print('pypoke', winnings[i, :])
+    #print('vector', rv[i, :])
   print('{0}/{1}'.format(passed, N_TESTCASES))
 
   # print(logger.hole_cards)
