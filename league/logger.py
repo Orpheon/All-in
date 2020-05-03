@@ -50,21 +50,3 @@ class Logger:
         json.dumps({'hole_cards': self.hole_cards, 'community_cards': self.community_cards,
                     'action_history': self.action_history})
       )
-
-class DummyLogger:
-
-  def __init__(self):
-    pass
-
-  def start_new_game(self, players, batch_size):
-    pass
-
-  def set_cards(self, community_cards, hole_cards):
-    pass
-
-  def add_action(self, round, player_idx, actions, amounts):
-    pass
-  def set_last_players(self, still_playing):
-    pass
-  def save_to_file(self):
-    pass
