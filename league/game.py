@@ -2,8 +2,7 @@ import numpy as np
 import pickle
 import treys
 
-# FIXME Remove this and add constants.* to everything once merge conflicts no longer an issue
-from constants import *
+import constants
 
 FULL_DECK = np.array(treys.Deck.GetFullDeck())
 
@@ -26,12 +25,12 @@ class GameEngine:
     return community_cards, hole_cards
 
   def run_game(self, players):
-    self.logger.log(EV_START_NEW_GAME, (self.N_PLAYERS, self.BATCH_SIZE))
+    self.logger.log(constants.EV_START_NEW_GAME, (self.N_PLAYERS, self.BATCH_SIZE))
     if len(players) != self.N_PLAYERS:
       raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
 
     community_cards, hole_cards = self.generate_cards()
-    self.logger.log(EV_DEALT_CARDS, (community_cards, hole_cards))
+    self.logger.log(constants.EV_DEALT_CARDS, (community_cards, hole_cards))
 
     folded = np.zeros((self.BATCH_SIZE, len(players)), dtype=bool)
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)), dtype=int)
@@ -40,19 +39,19 @@ class GameEngine:
       player.start_game(self.BATCH_SIZE, self.INITIAL_CAPITAL, self.N_PLAYERS)
 
     # Pre-flop
-    bets, _ = self.run_round(players, prev_round_investment, folded, PRE_FLOP, hole_cards, community_cards[:, :0])
+    bets, _ = self.run_round(players, prev_round_investment, folded, constants.PRE_FLOP, hole_cards, community_cards[:, :0])
     prev_round_investment += bets
 
     # Flop
-    bets, _ = self.run_round(players, prev_round_investment, folded, FLOP, hole_cards, community_cards[:, :3])
+    bets, _ = self.run_round(players, prev_round_investment, folded, constants.FLOP, hole_cards, community_cards[:, :3])
     prev_round_investment += bets
 
     # Turn
-    bets, _ = self.run_round(players, prev_round_investment, folded, TURN, hole_cards, community_cards[:, :4])
+    bets, _ = self.run_round(players, prev_round_investment, folded, constants.TURN, hole_cards, community_cards[:, :4])
     prev_round_investment += bets
 
     # River
-    bets, end_state = self.run_round(players, prev_round_investment, folded, RIVER, hole_cards, community_cards)
+    bets, end_state = self.run_round(players, prev_round_investment, folded, constants.RIVER, hole_cards, community_cards)
     prev_round_investment += bets
 
     # Showdown
@@ -73,7 +72,7 @@ class GameEngine:
 
     total_winnings -= prev_round_investment
 
-    self.logger.log(EV_END_GAME, (ranks, total_winnings))
+    self.logger.log(constants.EV_END_GAME, (ranks, total_winnings))
     self.logger.save_to_file()
 
     for player_idx, player in enumerate(players):
@@ -99,7 +98,7 @@ class GameEngine:
 
     player_order = list(enumerate(players))
 
-    if round == PRE_FLOP:
+    if round == constants.PRE_FLOP:
       current_bets[:, 0] = self.SMALL_BLIND
       current_bets[:, 1] = self.BIG_BLIND
       max_bets[:] = self.BIG_BLIND
@@ -115,18 +114,18 @@ class GameEngine:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                       last_raiser, hole_cards[:, player_idx, :], community_cards)
         # Disabled when not necessary because it bloats the log size (by ~500 kB or so, which triples the size)
-        self.logger.log(EV_PLAYER_ACTION, (round, player_idx, actions, amounts, round_countdown, folded[:, player_idx]))
+        self.logger.log(constants.EV_PLAYER_ACTION, (round, player_idx, actions, amounts, round_countdown, folded[:, player_idx]))
 
         # People who have already folded continue to fold
-        actions[folded[:, player_idx] == 1] = FOLD
+        actions[folded[:, player_idx] == 1] = constants.FOLD
         # People who have gone all-in continue to be all-in
-        actions[prev_round_investment[:, player_idx] + current_bets[:, player_idx] == self.INITIAL_CAPITAL] = CALL
+        actions[prev_round_investment[:, player_idx] + current_bets[:, player_idx] == self.INITIAL_CAPITAL] = constants.CALL
 
         ###########
         # CALLING #
         ###########
 
-        calls = np.where(np.logical_and(round_countdown > 0, actions == CALL))[0]
+        calls = np.where(np.logical_and(round_countdown > 0, actions == constants.CALL))[0]
         if calls.size > 0:
           # print("True calls", calls)
           investment = max_bets[calls]
@@ -138,7 +137,7 @@ class GameEngine:
         # RAISING #
         ###########
 
-        raises = np.where(np.logical_and(round_countdown > 0, actions == RAISE))[0]
+        raises = np.where(np.logical_and(round_countdown > 0, actions == constants.RAISE))[0]
         if raises.size > 0:
           # print("True raises", raises, amounts[raises])
           investment = np.maximum(current_bets[raises, player_idx] + amounts[raises], max_bets[raises] + min_raise[raises])
@@ -154,7 +153,7 @@ class GameEngine:
         # FOLDING #
         ###########
 
-        folded[np.where(np.logical_and(round_countdown > 0, actions == FOLD))[0], player_idx] = 1
+        folded[np.where(np.logical_and(round_countdown > 0, actions == constants.FOLD))[0], player_idx] = 1
         round_countdown[running_games] -= 1
         #TODO: if all folded stops game, improves performance but breaks tests
         # round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
