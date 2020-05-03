@@ -25,12 +25,10 @@ class GameEngine:
     return community_cards, hole_cards
 
   def run_game(self, players):
-    self.logger.log(constants.EV_START_NEW_GAME, (self.N_PLAYERS, self.BATCH_SIZE))
     if len(players) != self.N_PLAYERS:
       raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
 
     community_cards, hole_cards = self.generate_cards()
-    self.logger.log(constants.EV_DEALT_CARDS, (community_cards, hole_cards))
 
     folded = np.zeros((self.BATCH_SIZE, len(players)), dtype=bool)
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)), dtype=int)
@@ -72,7 +70,7 @@ class GameEngine:
 
     total_winnings -= prev_round_investment
 
-    self.logger.log(constants.EV_END_GAME, (ranks, total_winnings))
+    self.logger.log(constants.EV_END_GAME, (hand_scores, total_winnings))
     self.logger.save_to_file()
 
     for player_idx, player in enumerate(players):
@@ -114,7 +112,7 @@ class GameEngine:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                       last_raiser, hole_cards[:, player_idx, :], community_cards)
         # Disabled when not necessary because it bloats the log size (by ~500 kB or so, which triples the size)
-        self.logger.log(constants.EV_PLAYER_ACTION, (round, player_idx, actions, amounts, round_countdown, folded[:, player_idx]))
+        # self.logger.log(constants.EV_PLAYER_ACTION, (round, player_idx, actions, amounts, round_countdown, folded[:, player_idx]))
 
         # People who have already folded continue to fold
         actions[folded[:, player_idx] == 1] = constants.FOLD
@@ -165,7 +163,7 @@ class GameEngine:
   def evaluate_hands(self, community_cards, hole_cards, contenders):
     evaluator = treys.Evaluator()
     # 7463 = 1 lower than the lowest score a hand can have (scores are descending to 1)
-    results = np.full((self.BATCH_SIZE, self.N_PLAYERS), 7463)
+    results = np.full((self.BATCH_SIZE, self.N_PLAYERS), 7463, dtype=int)
     for game_idx,community in enumerate(community_cards):
       for player_idx,hole in enumerate(hole_cards[game_idx]):
         if contenders[game_idx, player_idx]:
