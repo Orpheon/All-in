@@ -1,4 +1,4 @@
-from agent.BaseAgent import BaseAgent
+from agent.baseAgent import BaseAgent
 from agent.sac1 import models
 from agent.sac1 import replaybuffer
 from copy import deepcopy

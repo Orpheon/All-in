@@ -1,4 +1,4 @@
-from agent.BaseAgent import BaseAgent
+from agent.baseAgent import BaseAgent
 
 
 class AllNothingAgent(BaseAgent):

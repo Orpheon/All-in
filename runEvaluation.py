@@ -10,11 +10,11 @@ import treys
 
 N_TESTCASES = 10000
 
-from baseline.ConsolePokerPlayer import ConsolePlayer
-from configuration.CashGameConfig import CashGameConfig
-from agent.MyBot import MyBotPlayer
-from agent.LeagueTestBot import LeagueTestBot
-from agent.random.RandomAgentPyPoker import RandomAgent
+from baseline.consolePokerPlayer import ConsolePlayer
+from configuration.cashGameConfig import CashGameConfig
+from agent.myBot import MyBotPlayer
+from agent.leagueTestBot import LeagueTestBot
+from agent.random.randomAgentPyPoker import RandomAgent
 
 parser = argparse.ArgumentParser(description='Run poker evaluation')
 parser.add_argument('--config', help='Config file')

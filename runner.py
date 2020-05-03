@@ -1,12 +1,12 @@
 import random
 
-from configuration.CashGameConfig import CashGameConfig
+from configuration.cashGameConfig import CashGameConfig
 
-from agent.allnothing.AllNothingAgent import AllNothingAgent
-from agent.call.CallAgent import CallAgent
-from agent.random.RandomAgentPyPoker import RandomAgent
+from agent.allnothing.allNothingAgent import AllNothingAgent
+from agent.call.callAgent import CallAgent
+from agent.random.randomAgentPyPoker import RandomAgent
 
-from league.Rating import Rating
+from league.rating import Rating
 
 
 class Runner:

@@ -1,5 +1,5 @@
 from typing import Dict, List, Union, Tuple
-from agent.random.RandomAgentPyPoker import RandomAgent
+from agent.random.randomAgentPyPoker import RandomAgent
 
 import json
 import pickle

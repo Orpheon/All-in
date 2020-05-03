@@ -3,10 +3,10 @@ import time
 
 import treys
 
-from agent.LeagueTestBot import LeagueTestBot
-from configuration.CashGameConfig import CashGameConfig
+from agent.leagueTestBot import LeagueTestBot
+from configuration.cashGameConfig import CashGameConfig
 from league.game import GameEngine
-from league.logger import Logger, DummyLogger
+from league.logger import GenericLogger, OldLogger
 
 import numpy as np
 
@@ -211,7 +211,7 @@ if __name__ == '__main__':
   # setup test environment
   #
   #logger = Logger('testoutput.json')
-  logger = DummyLogger()
+  logger = GenericLogger()
   mock_game_engine = MockGameEngine(N_TESTCASES, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, community_cards,
                                     hole_hands, logger)
   action_provider = ActionProvider(all_actions, all_amounts)
