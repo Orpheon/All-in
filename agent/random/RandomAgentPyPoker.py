@@ -2,7 +2,7 @@ from agent.BaseAgent import BaseAgent
 import random
 
 
-class RandomAgent(BaseAgent):
+class RandomAgentPyPoker(BaseAgent):
   _fold_ratio = 1.0 / 3
   _call_ratio = 2 * _fold_ratio
 

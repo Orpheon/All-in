@@ -1,18 +1,32 @@
 import json
 
 import numpy as np
+import datetime
+import os
+import pickle
+import bz2
 
-class DummyLogger:
+import time
 
-  def __init__(self): pass
-  def start_new_game(self, players, batch_size): pass
-  def set_cards(self, community_cards, hole_cards): pass
-  def add_action(self, round, player_idx, actions, amounts, round_countdown, folded): pass
-  def append_folded(self, after_round, folded): pass
-  def save_to_file(self): pass
+class GenericLogger:
+  def __init__(self, root='./gamelogs'):
+    self._root = root
+    self._log = []
+    os.makedirs(self._root, exist_ok=True)
 
+  def log(self, event_code, data):
+    self._log.append((event_code, *data))
 
-class Logger:
+  def save_to_file(self):
+    t1 = time.time()
+    today_str = datetime.datetime.now().isoformat()
+    with bz2.BZ2File(os.path.join(self._root, today_str+ ".bz2"), 'wb') as f:
+      pickle.dump(self._log, f)
+    self._log.clear()
+    t2 = time.time()
+    print("Time to save log:", t2-t1)
+
+class OldLogger:
   hole_cards = None
   community_cards = None
   action_history = []

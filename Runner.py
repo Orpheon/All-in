@@ -4,7 +4,7 @@ from configuration.CashGameConfig import CashGameConfig
 
 from agent.allnothing.AllNothingAgent import AllNothingAgent
 from agent.call.CallAgent import CallAgent
-from agent.random.RandomAgent import RandomAgent
+from agent.random.RandomAgentPyPoker import RandomAgent
 
 from league.Rating import Rating
 

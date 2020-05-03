@@ -12,7 +12,7 @@ locale.setlocale(locale.LC_ALL, '')
 
 class CashGameConfig():
 
-    def __init__(self, small_blind_amount: int = 1, evaluations: int = 1000000, log_file_location: str = './logs/log.json'):
+    def __init__(self, small_blind_amount: int = 1, evaluations: int = 1000000, log_file_location: str = './gamelogs/log.json'):
         """
         Setup a new CashGame
         :param small_blind_amount: int. Specify small blind

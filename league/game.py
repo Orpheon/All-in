@@ -26,18 +26,12 @@ class GameEngine:
     return community_cards, hole_cards
 
   def run_game(self, players):
-    self.logger.start_new_game(self.N_PLAYERS, self.BATCH_SIZE)
+    self.logger.log(EV_START_NEW_GAME, (self.N_PLAYERS, self.BATCH_SIZE))
     if len(players) != self.N_PLAYERS:
       raise ValueError('Only {} players allowed'.format(self.N_PLAYERS))
 
     community_cards, hole_cards = self.generate_cards()
-    self.logger.set_cards(community_cards, hole_cards)
-
-    # with open("tmp_cards.dump", "wb") as f:
-    #  pickle.dump((community_cards, hole_cards), f)
-
-    # with open("tmp_cards.dump", "rb") as f:
-    #  community_cards, hole_cards = pickle.load(f)
+    self.logger.log(EV_DEALT_CARDS, (community_cards, hole_cards))
 
     folded = np.zeros((self.BATCH_SIZE, len(players)), dtype=bool)
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)), dtype=int)
@@ -45,36 +39,21 @@ class GameEngine:
     for player in players:
       player.start_game(self.BATCH_SIZE, self.INITIAL_CAPITAL, self.N_PLAYERS)
 
-    # print("PREFLOP")
-
     # Pre-flop
     bets, _ = self.run_round(players, prev_round_investment, folded, PRE_FLOP, hole_cards, community_cards[:, :0])
     prev_round_investment += bets
-    # self.logger.append_folded('PREFLOP', folded)
-
-    # print("FLOP")
 
     # Flop
     bets, _ = self.run_round(players, prev_round_investment, folded, FLOP, hole_cards, community_cards[:, :3])
     prev_round_investment += bets
-    # self.logger.append_folded('FLOP', folded)
-
-    # print("TURN")
 
     # Turn
     bets, _ = self.run_round(players, prev_round_investment, folded, TURN, hole_cards, community_cards[:, :4])
     prev_round_investment += bets
-    # self.logger.append_folded('TURN', folded)
-
-    # print("RIVER")
 
     # River
     bets, end_state = self.run_round(players, prev_round_investment, folded, RIVER, hole_cards, community_cards)
     prev_round_investment += bets
-    # self.logger.append_folded('RIVER', folded)
-
-    # print("SHOWDOWN")
-
 
     # Showdown
     pool = np.sum(prev_round_investment, axis=1)
@@ -93,6 +72,9 @@ class GameEngine:
     total_winnings += participants * gains[:, None]
 
     total_winnings -= prev_round_investment
+
+    self.logger.log(EV_END_GAME, (ranks, total_winnings))
+    self.logger.save_to_file()
 
     for player_idx, player in enumerate(players):
       player.end_trajectory(*end_state, total_winnings[:, player_idx])
@@ -132,15 +114,13 @@ class GameEngine:
       for player_idx, player in player_order:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                       last_raiser, hole_cards[:, player_idx, :], community_cards)
-        # self.logger.add_action(round, player_idx, actions, amounts, round_countdown, folded[:, player_idx])
+        # Disabled when not necessary because it bloats the log size (by ~500 kB or so, which triples the size)
+        self.logger.log(EV_PLAYER_ACTION, (round, player_idx, actions, amounts, round_countdown, folded[:, player_idx]))
 
         # People who have already folded continue to fold
         actions[folded[:, player_idx] == 1] = FOLD
         # People who have gone all-in continue to be all-in
         actions[prev_round_investment[:, player_idx] + current_bets[:, player_idx] == self.INITIAL_CAPITAL] = CALL
-
-        # print("Player", player_idx)
-        # print("Actions", actions)
 
         ###########
         # CALLING #
@@ -178,8 +158,6 @@ class GameEngine:
         round_countdown[running_games] -= 1
         #TODO: if all folded stops game, improves performance but breaks tests
         # round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
-
-        # print("Bets after turn", current_bets[:, player_idx])
 
         if np.max(round_countdown[running_games]) <= 0:
           return current_bets, (player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,

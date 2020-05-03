@@ -14,7 +14,7 @@ from baseline.ConsolePokerPlayer import ConsolePlayer
 from configuration.CashGameConfig import CashGameConfig
 from agent.MyBot import MyBotPlayer
 from agent.LeagueTestBot import LeagueTestBot
-from agent.random.RandomAgent import RandomAgent
+from agent.random.RandomAgentPyPoker import RandomAgent
 
 parser = argparse.ArgumentParser(description='Run poker evaluation')
 parser.add_argument('--config', help='Config file')
