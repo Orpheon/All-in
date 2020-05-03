@@ -45,35 +45,35 @@ class GameEngine:
     for player in players:
       player.start_game(self.BATCH_SIZE, self.INITIAL_CAPITAL, self.N_PLAYERS)
 
-    print("PREFLOP")
+    # print("PREFLOP")
 
     # Pre-flop
     bets, _ = self.run_round(players, prev_round_investment, folded, PRE_FLOP, hole_cards, community_cards[:, :0])
     prev_round_investment += bets
-    self.logger.append_folded('PREFLOP', folded)
+    # self.logger.append_folded('PREFLOP', folded)
 
-    print("FLOP")
+    # print("FLOP")
 
     # Flop
     bets, _ = self.run_round(players, prev_round_investment, folded, FLOP, hole_cards, community_cards[:, :3])
     prev_round_investment += bets
-    self.logger.append_folded('FLOP', folded)
+    # self.logger.append_folded('FLOP', folded)
 
-    print("TURN")
+    # print("TURN")
 
     # Turn
     bets, _ = self.run_round(players, prev_round_investment, folded, TURN, hole_cards, community_cards[:, :4])
     prev_round_investment += bets
-    self.logger.append_folded('TURN', folded)
+    # self.logger.append_folded('TURN', folded)
 
-    print("RIVER")
+    # print("RIVER")
 
     # River
     bets, end_state = self.run_round(players, prev_round_investment, folded, RIVER, hole_cards, community_cards)
     prev_round_investment += bets
-    self.logger.append_folded('RIVER', folded)
+    # self.logger.append_folded('RIVER', folded)
 
-    print("SHOWDOWN")
+    # print("SHOWDOWN")
 
 
     # Showdown
@@ -132,9 +132,12 @@ class GameEngine:
       for player_idx, player in player_order:
         actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                       last_raiser, hole_cards[:, player_idx, :], community_cards)
-        self.logger.add_action(round, player_idx, actions, amounts, round_countdown, folded[:, player_idx])
-        actions[folded[:, player_idx] == 1] = FOLD
+        # self.logger.add_action(round, player_idx, actions, amounts, round_countdown, folded[:, player_idx])
 
+        # People who have already folded continue to fold
+        actions[folded[:, player_idx] == 1] = FOLD
+        # People who have gone all-in continue to be all-in
+        actions[prev_round_investment[:, player_idx] + current_bets[:, player_idx] == self.INITIAL_CAPITAL] = CALL
 
         # print("Player", player_idx)
         # print("Actions", actions)
@@ -174,7 +177,7 @@ class GameEngine:
         folded[np.where(np.logical_and(round_countdown > 0, actions == FOLD))[0], player_idx] = 1
         round_countdown[running_games] -= 1
         #TODO: if all folded stops game, improves performance but breaks tests
-        #round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
+        # round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
 
         # print("Bets after turn", current_bets[:, player_idx])
 
