@@ -4,7 +4,9 @@ from agent.sac1 import replaybuffer
 from copy import deepcopy
 import torch
 import itertools
+import os
 import numpy as np
+import time
 
 import constants
 
@@ -33,35 +35,40 @@ class Sac1Agent(BaseAgent):
     # Action dimension (call and raise ceiling)
     self.act_dim = 2
 
-    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1)
+    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.config['trainable'])
 
-    self.target_ac = deepcopy(self.ac)
-    for parameter in self.target_ac.parameters():
-      parameter.requires_grad = False
+    if self.config['trainable']:
+      self.target_ac = deepcopy(self.ac)
+      for parameter in self.target_ac.parameters():
+        parameter.requires_grad = False
 
-    self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim, act_dim=self.act_dim,
-                                                  size=15 * self.BATCH_SIZE)
+      self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim, act_dim=self.act_dim,
+                                                    size=15 * self.BATCH_SIZE)
 
-    self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=self.config['learning_rate'])
-    self.q_optimizer = torch.optim.Adam(itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()),
-                                        lr=self.config['learning_rate'])
+      self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=self.config['learning_rate'])
+      self.q_optimizer = torch.optim.Adam(itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()),
+                                          lr=self.config['learning_rate'])
 
-    self.first_round = True
-    self.prev_state = None
-    self.prev_action = None
+      self.first_round = True
+      self.prev_state = None
+      self.prev_action = None
+
+      if os.path.exists(self.config['checkpoint_path']):
+        self.load_checkpoint()
 
   def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards,
           community_cards):
     state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
 
-    network_output = self.ac.act(torch.as_tensor(state, dtype=torch.float32), deterministic=True)
+    network_output = self.ac.act(torch.as_tensor(state, dtype=torch.float32), deterministic=not self.config['trainable'])
 
-    if not self.first_round:
-      self.replaybuffer.store(self.prev_state, self.prev_action, 0, state, False, self.BATCH_SIZE)
-    self.first_round = False
-    self.prev_state = state
-    self.prev_action = network_output
+    if self.config['trainable']:
+      if not self.first_round:
+        self.replaybuffer.store(self.prev_state, self.prev_action, 0, state, False, self.BATCH_SIZE)
+      self.first_round = False
+      self.prev_state = state
+      self.prev_action = network_output
 
     actions, amounts = self.interpret_network_output(network_output, current_bets[:, player_idx],
                                                      prev_round_investment[:, player_idx], min_raise)
@@ -69,12 +76,15 @@ class Sac1Agent(BaseAgent):
     return actions, amounts
 
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards, community_cards, gains):
-    state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
-                                     last_raiser, hole_cards, community_cards)
-    self.replaybuffer.store(self.prev_state, self.prev_action, gains / self.INITAL_CAPITAL, state, True, self.BATCH_SIZE)
-    self.train()
+    if self.config['trainable']:
+      state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
+                                       last_raiser, hole_cards, community_cards)
+      self.replaybuffer.store(self.prev_state, self.prev_action, gains / self.INITAL_CAPITAL, state, True, self.BATCH_SIZE)
+      self.train()
+      self.save_checkpoint()
 
   def train(self):
+    print("Training..")
     self.replaybuffer.shuffle()
     batch = self.replaybuffer.sample_batch(batch_size=1000)
     while batch:
@@ -217,3 +227,13 @@ class Sac1Agent(BaseAgent):
         # params, as opposed to "mul" and "add", which would make new tensors.
         p_targ.data.mul_(self.polyak)
         p_targ.data.add_((1 - self.polyak) * p.data)
+
+  def save_checkpoint(self):
+    self.ac.save(self.config['checkpoint_path'])
+    torch.save(self.pi_optimizer.state_dict(), os.path.join(self.config['checkpoint_path'], 'pi_opt.optb'))
+    torch.save(self.q_optimizer.state_dict(), os.path.join(self.config['checkpoint_path'], 'q_opt.optb'))
+
+  def load_checkpoint(self):
+    self.ac.load(self.config['checkpoint_path'])
+    self.pi_optimizer.load_state_dict(torch.load(os.path.join(self.config['checkpoint_path'], 'pi_opt.optb')))
+    self.q_optimizer.load_state_dict(torch.load(os.path.join(self.config['checkpoint_path'], 'q_opt.optb')))
