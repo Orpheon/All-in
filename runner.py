@@ -37,6 +37,7 @@ if __name__ == '__main__':
   #rating.load_ratings()
   while True:
     matchup = generate_matchup(all_agent_types)
+    print("Matchup:", " ".join(str(m) for m in matchup))
     total_winnings = game_engine.run_game(matchup)
     winnings = np.sum(total_winnings, axis=0).tolist()
     placings = [str(i[1]) for i in sorted(list(zip(winnings, matchup)), key=itemgetter(0), reverse=True)]

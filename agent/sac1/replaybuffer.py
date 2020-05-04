@@ -35,19 +35,15 @@ class ReplayBuffer:
     self.size = min(self.size+batch_size, self.max_size)
 
   def shuffle(self):
-    rng_state = np.random.get_state()
-    np.random.shuffle(self.obs_buf)
-    np.random.set_state(rng_state)
-    np.random.shuffle(self.obs2_buf)
-    np.random.set_state(rng_state)
-    np.random.shuffle(self.act_buf)
-    np.random.set_state(rng_state)
-    np.random.shuffle(self.rew_buf)
-    np.random.set_state(rng_state)
-    np.random.shuffle(self.done_buf)
+    rand_indices = np.random.permutation(self.obs_buf.shape[0])
+    self.obs_buf = self.obs_buf[rand_indices]
+    self.obs2_buf = self.obs2_buf[rand_indices]
+    self.act_buf = self.act_buf[rand_indices]
+    self.rew_buf = self.rew_buf[rand_indices]
+    self.done_buf = self.done_buf[rand_indices]
     self.replay_ptr = 0
 
-  def sample_batch(self, batch_size=32):
+  def sample_batch(self, batch_size):
     if self.replay_ptr + batch_size <= self.size:
       batch = dict(obs=self.obs_buf[self.replay_ptr:self.replay_ptr+batch_size],
              obs2=self.obs2_buf[self.replay_ptr:self.replay_ptr+batch_size],
