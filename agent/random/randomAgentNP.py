@@ -17,7 +17,7 @@ class RandomAgentNP(BaseAgentLoadable):
     return actions, amounts
 
   def __str__(self):
-    return 'RandomAgentNP{0}'.format(self.agent_id)
+    return 'RandomAgentNP_{0}'.format(self.agent_id)
 
   @classmethod
   def _config_file_path(cls):
