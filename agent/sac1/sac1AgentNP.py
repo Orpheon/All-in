@@ -138,8 +138,8 @@ class Sac1AgentNP(BaseAgentLoadable):
     actions[:] = constants.FOLD
 
     current_stake = current_bets + prev_round_investment
-    desired_raises = current_stake + min_raise < network_output[:, 0]
-    desired_calls = current_stake < network_output[:, 1]
+    desired_raises = current_stake + min_raise < (network_output[:, 0] + 1) * self.INITAL_CAPITAL / 2
+    desired_calls = current_stake < (network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2
 
     actions[desired_raises] = constants.RAISE
     amounts[desired_raises] = network_output[desired_raises, 0] - current_stake[desired_raises]
