@@ -117,7 +117,7 @@ class Sac1AgentNP(BaseAgentLoadable):
     # Who put how much this round
     player_data[:, 3, :] = (current_bets) / self.INITAL_CAPITAL
     # Who was the last to raise
-    player_data[:, 4, last_raiser] = 1
+    player_data[:, 4, :] = np.eye(self.N_PLAYERS)[last_raiser]
 
     tail_data = np.zeros((self.BATCH_SIZE, 5 + 1))
     tail_data[:, round] = 1
