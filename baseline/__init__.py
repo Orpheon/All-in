@@ -1,2 +1,2 @@
-__all__ = ["BaselinePokerPlayer", "CallBaselinePokerPlayer", "ConsolePokerPlayer", "RandomPokerPlayer"]
+__all__ = ["baselinePokerPlayer", "callBaselinePokerPlayer", "consolePokerPlayer", "randomPokerPlayer"]
 

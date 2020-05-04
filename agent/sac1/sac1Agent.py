@@ -1,6 +1,8 @@
-from agent.BaseAgent import BaseAgent
+from agent.baseAgentLoadable import BaseAgentLoadable
+
 from agent.sac1 import models
 from agent.sac1 import replaybuffer
+
 from copy import deepcopy
 import torch
 import itertools
@@ -11,7 +13,7 @@ import time
 import constants
 
 
-class Sac1Agent(BaseAgent):
+class Sac1Agent(BaseAgentLoadable):
   def __str__(self):
     return 'SacAgent1_{0}'.format(self.agent_id)
 

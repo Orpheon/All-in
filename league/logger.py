@@ -20,7 +20,9 @@ class GenericLogger:
   def save_to_file(self):
     t1 = time.time()
     today_str = datetime.datetime.now().isoformat()
-    with bz2.BZ2File(os.path.join(self._root, today_str+ ".bz2"), 'wb') as f:
+    today_str = today_str.replace(':','-') #windows compatibility
+    file_path = os.path.join(self._root, today_str + ".bz2")
+    with bz2.BZ2File(file_path, 'wb') as f:
       pickle.dump(self._log, f)
     self._log.clear()
     t2 = time.time()

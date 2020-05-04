@@ -1,8 +1,9 @@
 import json
-from pypokerengine.players import BasePokerPlayer
+
+from agent.baseAgentNP import BaseAgentNP
 
 
-class BaseAgent(BasePokerPlayer):
+class BaseAgentLoadable(BaseAgentNP):
 
   def __init__(self, agent_id, config):
     super().__init__()

@@ -5,8 +5,8 @@ import random
 import time
 import json
 from league.logger import GenericLogger
-from agent.sac1.Sac1Agent import Sac1Agent
-from agent.random.RandomAgentNP import RandomAgentNP
+from agent.sac1.sac1Agent import Sac1Agent
+from agent.random.randomAgentNP import RandomAgentNP
 
 
 batch_size = 10000
