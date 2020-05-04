@@ -19,7 +19,6 @@ def generate_matchup(all_agent_types):
 
 
 if __name__ == '__main__':
-  # all_agent_types = [RandomAgentNP, CallAgentNP]
   all_agent_types = [RandomAgentNP, Sac1AgentNP, CallAgentNP]
 
   BATCH_SIZE = 10000

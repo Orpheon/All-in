@@ -3,6 +3,9 @@ import random
 
 import matplotlib.pyplot as plt
 import trueskill
+import seaborn as sns
+
+sns.set_style("whitegrid")
 
 
 class Rating:
