@@ -6,8 +6,6 @@ import os
 import pickle
 import bz2
 
-import time
-
 class GenericLogger:
   def __init__(self, root='./gamelogs'):
     self._root = root
@@ -18,15 +16,12 @@ class GenericLogger:
     self._log.append((event_code, *data))
 
   def save_to_file(self):
-    t1 = time.time()
     today_str = datetime.datetime.now().isoformat()
     today_str = today_str.replace(':','-') #windows compatibility
     file_path = os.path.join(self._root, today_str + ".bz2")
     with bz2.BZ2File(file_path, 'wb') as f:
       pickle.dump(self._log, f)
     self._log.clear()
-    t2 = time.time()
-    print("Time to save log:", t2-t1)
 
 class OldLogger:
   hole_cards = None

@@ -86,7 +86,6 @@ class Sac1AgentNP(BaseAgentLoadable):
       self.save_checkpoint()
 
   def train(self):
-    print("Training..")
     self.replaybuffer.shuffle()
     batch = self.replaybuffer.sample_batch(batch_size=1000)
     while batch:
