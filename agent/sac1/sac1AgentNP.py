@@ -1,7 +1,7 @@
 from agent.baseAgentLoadable import BaseAgentLoadable
-
 from agent.sac1 import models
 from agent.sac1 import replaybuffer
+from league.spinningupLogger import EpochLogger
 
 from copy import deepcopy
 import torch
@@ -21,7 +21,9 @@ class Sac1AgentNP(BaseAgentLoadable):
   def _config_file_path(cls):
     return './agent/sac1/config.json'
 
-  def start_game(self, batch_size, initial_capital, n_players, alpha=0.2, gamma=0.99, polyak=0.995):
+  logger = EpochLogger(output_dir='sac1/logs', output_fname='progress.csv')
+
+  def start_game(self, batch_size, initial_capital, n_players, alpha=0.01, gamma=0.99, polyak=0.995, learning_rate=0.01):
     self.BATCH_SIZE = batch_size
     self.INITAL_CAPITAL = initial_capital
     self.N_PLAYERS = n_players
@@ -47,9 +49,9 @@ class Sac1AgentNP(BaseAgentLoadable):
       self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim, act_dim=self.act_dim,
                                                     size=15 * self.BATCH_SIZE)
 
-      self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=self.config['learning_rate'])
+      self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=learning_rate)
       self.q_optimizer = torch.optim.Adam(itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()),
-                                          lr=self.config['learning_rate'])
+                                          lr=learning_rate)
 
       self.first_round = True
       self.prev_state = None
@@ -87,10 +89,23 @@ class Sac1AgentNP(BaseAgentLoadable):
 
   def train(self):
     self.replaybuffer.shuffle()
-    batch = self.replaybuffer.sample_batch(batch_size=1000)
+    batch = self.replaybuffer.sample_batch(batch_size=min(1000, self.BATCH_SIZE))
     while batch:
       self.update_parameters(batch)
-      batch = self.replaybuffer.sample_batch(batch_size=1000)
+      batch = self.replaybuffer.sample_batch(batch_size=min(1000, self.BATCH_SIZE))
+
+    self.log_everything()
+
+  def log_everything(self):
+    self.logger.log_tabular('EntropyBonus', with_min_and_max=True, average_only=True)
+    self.logger.log_tabular('Q1Vals', with_min_and_max=True, average_only=True)
+    self.logger.log_tabular('Q2Vals', with_min_and_max=True, average_only=True)
+    self.logger.log_tabular('LogPi', with_min_and_max=True)
+    self.logger.log_tabular('LossPi', average_only=True)
+    self.logger.log_tabular('LossQ', average_only=True)
+    self.logger.log_tabular('DesiredRaises', average_only=True)
+    self.logger.log_tabular('DesiredCalls', average_only=True)
+    self.logger.dump_tabular()
 
   def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                           hole_cards, community_cards):
@@ -146,6 +161,8 @@ class Sac1AgentNP(BaseAgentLoadable):
 
     actions[desired_calls & np.logical_not(desired_raises)] = constants.CALL
 
+    self.logger.store(DesiredRaises=desired_raises.mean(), DesiredCalls=desired_calls.mean())
+
     return actions, amounts
 
   # Set up function for computing SAC Q-losses
@@ -164,6 +181,7 @@ class Sac1AgentNP(BaseAgentLoadable):
       q1_pi_targ = self.target_ac.q1(o2, a2)
       q2_pi_targ = self.target_ac.q2(o2, a2)
       q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
+      self.logger.store(EntropyBonus=(-self.alpha * logp_a2).detach().numpy())
       backup = r + self.gamma * (1 - d) * (q_pi_targ - self.alpha * logp_a2)
 
     # MSE loss against Bellman backup
@@ -201,7 +219,7 @@ class Sac1AgentNP(BaseAgentLoadable):
     self.q_optimizer.step()
 
     # Record things
-    # logger.store(LossQ=loss_q.item(), **q_info)
+    self.logger.store(LossQ=loss_q.item(), **q_info)
 
     # Freeze Q-networks so you don't waste computational effort
     # computing gradients for them during the policy learning step.
@@ -219,7 +237,7 @@ class Sac1AgentNP(BaseAgentLoadable):
       p.requires_grad = True
 
     # Record things
-    # logger.store(LossPi=loss_pi.item(), **pi_info)
+    self.logger.store(LossPi=loss_pi.item(), **pi_info)
 
     # Finally, update target networks by polyak averaging.
     with torch.no_grad():
