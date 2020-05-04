@@ -68,11 +68,6 @@ class Rating:
 
 
 if __name__ == '__main__':
-  rating = Rating('ratings.json')
-  players = ['player{0}'.format(n) for n in range(2, 7)]
-
-  for _ in range(10):
-    random.shuffle(players)
-    rating.update_from_placings(['player1', *players])
-
+  rating = Rating('runner_ratings.json')
+  rating.load_ratings()
   rating.plot_history()
