@@ -13,7 +13,7 @@ import time
 import constants
 
 
-class Sac1Agent(BaseAgentLoadable):
+class Sac1AgentNP(BaseAgentLoadable):
   def __str__(self):
     return 'SacAgent1_{0}'.format(self.agent_id)
 

@@ -5,18 +5,18 @@ import random
 import time
 import json
 from league.logger import GenericLogger
-from agent.sac1.sac1Agent import Sac1Agent
+from agent.sac1.sac1AgentNP import Sac1AgentNP
 from agent.random.randomAgentNP import RandomAgentNP
 
 
 batch_size = 10000
 game = league.game.GameEngine(BATCH_SIZE=batch_size, INITIAL_CAPITAL=100, SMALL_BLIND=2, BIG_BLIND=4, logger=GenericLogger())
 
-with open(Sac1Agent._config_file_path(), 'r') as f:
+with open(Sac1AgentNP._config_file_path(), 'r') as f:
   agents = json.load(f)['agent_ids']
 ids = list(agents.keys())
 
-players = [Sac1Agent(ids[0], agents[ids[0]]), RandomAgentNP(), RandomAgentNP(), RandomAgentNP(),
+players = [Sac1AgentNP(ids[0], agents[ids[0]]), RandomAgentNP(), RandomAgentNP(), RandomAgentNP(),
            RandomAgentNP(), RandomAgentNP()]
 iteration = 0
 while True:

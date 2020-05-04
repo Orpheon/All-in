@@ -4,6 +4,8 @@ from operator import itemgetter
 import numpy as np
 
 from agent.random.randomAgentNP import RandomAgentNP
+from agent.sac1.sac1AgentNP import Sac1AgentNP
+from agent.call.callAgentNP import CallAgentNP
 
 from league.rating import Rating
 from league.game import GameEngine
@@ -17,9 +19,10 @@ def generate_matchup(all_agent_types):
 
 
 if __name__ == '__main__':
-  all_agent_types = [RandomAgentNP]
+  # all_agent_types = [RandomAgentNP, CallAgentNP]
+  all_agent_types = [RandomAgentNP, Sac1AgentNP, CallAgentNP]
 
-  BATCH_SIZE = 100000
+  BATCH_SIZE = 10000
   INITIAL_CAPITAL = 200
   SMALL_BLIND = 1
   BIG_BLIND = 2
