@@ -1,4 +1,4 @@
-from agent.baseAgent import BaseAgent
+from agent.baseAgentLoadable import BaseAgent
 import random
 
 

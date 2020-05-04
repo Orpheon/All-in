@@ -1,12 +1,12 @@
 from typing import Dict, List, Union, Tuple
-from agent.random.randomAgentPyPoker import RandomAgent
+from agent.random.randomAgentPyPoker import RandomAgentPyPoker
 
 import json
 import pickle
 import os
 import random
 
-class LeagueTestBot(RandomAgent):
+class LeagueTestBot(RandomAgentPyPoker):
   def __init__(self):
     self._fold_ratio = 0.1
     self._call_ratio = 0.5
