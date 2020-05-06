@@ -51,13 +51,15 @@ class SquashedGaussianMLPActor(nn.Module):
       # Try deriving it yourself as a (very difficult) exercise. :)
       logp_pi = pi_distribution.log_prob(pi_action).sum(axis=-1)
       logp_pi -= (2*(np.log(2) - pi_action - F.softplus(-2*pi_action))).sum(axis=1)
+      action_range = (torch.tanh(mu + std) - torch.tanh(mu - std)) * self.act_limit / 2
     else:
       logp_pi = None
+      action_range = None
 
     pi_action = torch.tanh(pi_action)
     pi_action = self.act_limit * pi_action
 
-    return pi_action, logp_pi
+    return pi_action, logp_pi, action_range
 
 
 class MLPQFunction(nn.Module):
@@ -88,7 +90,7 @@ class MLPActorCritic(nn.Module):
 
   def act(self, obs, deterministic=False):
     with torch.no_grad():
-      a, _ = self.pi(obs, deterministic, False)
+      a, _, _ = self.pi(obs, deterministic, False)
       return a.numpy()
 
   def save(self, path):
