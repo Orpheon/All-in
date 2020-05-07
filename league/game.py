@@ -74,7 +74,9 @@ class GameEngine:
     self.logger.save_to_file()
 
     for player_idx, player in enumerate(players):
-      player.end_trajectory(*end_state, total_winnings[:, player_idx])
+      round, current_bets, min_raise, prev_round_investment, folded, last_raiser = end_state
+      player.end_trajectory(player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
+                            hole_cards[:, player_idx, :], community_cards, total_winnings[:, player_idx])
 
     return total_winnings
 
@@ -157,8 +159,7 @@ class GameEngine:
         # round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
 
         if np.max(round_countdown[running_games]) <= 0:
-          return current_bets, (player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
-                                hole_cards[:, player_idx, :], community_cards)
+          return current_bets, (round, current_bets, min_raise, prev_round_investment, folded, last_raiser)
 
   def evaluate_hands(self, community_cards, hole_cards, contenders):
     evaluator = treys.Evaluator()
