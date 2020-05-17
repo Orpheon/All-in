@@ -70,7 +70,7 @@ class GameEngine:
 
     total_winnings -= prev_round_investment
 
-    self.logger.log(constants.EV_END_GAME, (hand_scores, total_winnings, [str(p) for p in players]))
+    self.logger.log(constants.EV_END_GAME, (hand_scores, total_winnings, [str(p) for p in players], folded))
     self.logger.save_to_file()
 
     for player_idx, player in enumerate(players):
@@ -98,14 +98,14 @@ class GameEngine:
 
     player_order = list(enumerate(players))
 
+    round_countdown = np.zeros(self.BATCH_SIZE, dtype=int)
+    round_countdown[:] = self.N_PLAYERS
+
     if round == constants.PRE_FLOP:
       current_bets[:, 0] = self.SMALL_BLIND
       current_bets[:, 1] = self.BIG_BLIND
       max_bets[:] = self.BIG_BLIND
       player_order = player_order[2:] + player_order[:2]
-
-    round_countdown = np.zeros(self.BATCH_SIZE, dtype=int)
-    round_countdown[:] = self.N_PLAYERS
 
     while True:
       running_games = np.nonzero(round_countdown > 0)[0]
@@ -156,7 +156,8 @@ class GameEngine:
         folded[np.where(np.logical_and(round_countdown > 0, actions == constants.FOLD))[0], player_idx] = 1
         round_countdown[running_games] -= 1
         #TODO: if all folded stops game, improves performance but breaks tests
-        # round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
+        # test is not broken, is there another reason?
+        round_countdown[folded.sum(axis=1) == self.N_PLAYERS-1] = 0
 
         if np.max(round_countdown[running_games]) <= 0:
           return current_bets, (round, current_bets, min_raise, prev_round_investment, folded, last_raiser)
