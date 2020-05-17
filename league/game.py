@@ -70,7 +70,7 @@ class GameEngine:
 
     total_winnings -= prev_round_investment
 
-    self.logger.log(constants.EV_END_GAME, (hand_scores, total_winnings))
+    self.logger.log(constants.EV_END_GAME, (hand_scores, total_winnings, [str(p) for p in players]))
     self.logger.save_to_file()
 
     for player_idx, player in enumerate(players):
