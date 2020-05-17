@@ -3,7 +3,10 @@ import time
 
 import treys
 
-from agent.leagueTestBot import LeagueTestBot
+from pypokerengine.players import BasePokerPlayer
+
+from agent.pypokerAgentAdapter import PypokerAgentAdapter
+from agent.random.randomAgentNP import RandomAgentNP
 from configuration.cashGameConfig import CashGameConfig
 from league.game import GameEngine
 from league.logger import GenericLogger, OldLogger
@@ -54,7 +57,7 @@ class ActionProvider:
            np.array(self.actions[self.idx][1]), np.array(self.amounts[self.idx][1])
 
 
-class MockPlayer(LeagueTestBot):
+class MockPlayer(BasePokerPlayer):
   def __init__(self, action_provider):
     super().__init__()
     self.action_provider = action_provider
@@ -90,7 +93,7 @@ if __name__ == '__main__':
   #
   poker_config = CashGameConfig(evaluations=N_TESTCASES, log_file_location="leaguetestlog.json")
   for _ in range(N_PLAYERS):
-    poker_config.register_player("LeagueTestBot", LeagueTestBot())
+    poker_config.register_player("LeagueTestBot", PypokerAgentAdapter(RandomAgentNP(None, None)))
 
   print(f"Start evaluating {poker_config.evaluations} hands")
   start = time.time()
