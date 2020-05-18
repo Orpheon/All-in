@@ -116,18 +116,16 @@ class Sac1AgentNP(BaseAgentLoadable):
     self.log_everything()
 
   def log_everything(self):
-    self.logger.log_tabular('EntropyBonus', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('Q1Vals', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('Q2Vals', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('PiRange0', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('PiRange1', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('LogPi', average_only=True)
+    self.logger.log_tabular('QContribPiLoss', with_min_and_max=True, average_only=True)
     self.logger.log_tabular('LossPi', average_only=True)
-    self.logger.log_tabular('LossQ', average_only=True)
-    self.logger.log_tabular('TargetQdonePred', average_only=True, with_min_and_max=True)
+    self.logger.log_tabular('EntropyBonus', average_only=True)
+    self.logger.log_tabular('Raises', average_only=True)
+    self.logger.log_tabular('Calls', average_only=True)
+    self.logger.log_tabular('Folds', average_only=True)
+    self.logger.log_tabular('QVals', with_min_and_max=True, average_only=True)
+    self.logger.log_tabular('TargQVals', with_min_and_max=True, average_only=True)
     self.logger.log_tabular('Reward', average_only=True)
-    self.logger.log_tabular('RaiseTarget', average_only=True)
-    self.logger.log_tabular('CallTarget', average_only=True)
+    self.logger.log_tabular('LossQ', average_only=True)
     self.logger.dump_tabular()
 
   def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
@@ -199,17 +197,13 @@ class Sac1AgentNP(BaseAgentLoadable):
     # Bellman backup for Q functions
     with torch.no_grad():
       # Target actions come from *current* policy
-      a2, logp_a2, _ = self.ac.pi(o2)
+      a2, logp_a2 = self.ac.pi(o2)
 
       # Target Q-values
       q1_pi_targ = self.target_ac.q1(o2, a2)
       q2_pi_targ = self.target_ac.q2(o2, a2)
       q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-      self.logger.store(EntropyBonus=(-self.alpha * logp_a2).detach().numpy())
-      if d:
-        self.logger.store(QdonePred=self.ac.q1(o2, a2).detach().numpy())
-        self.logger.store(TargetQdonePred=q_pi_targ.detach().numpy())
-        self.logger.store(Reward=r.detach().numpy())
+      self.logger.store(EntropyBonus=(-self.alpha * logp_a2).cpu().detach().numpy())
       backup = r + self.gamma * (1 - d) * (q_pi_targ - self.alpha * logp_a2)
 
     # MSE loss against Bellman backup
@@ -218,27 +212,24 @@ class Sac1AgentNP(BaseAgentLoadable):
     loss_q = loss_q1 + loss_q2
 
     # Useful info for logging
-    q_info = dict(Q1Vals=q1.detach().numpy(),
-                  Q2Vals=q2.detach().numpy())
+    q_info = dict(QVals=((q1+q2)/2).cpu().detach().numpy(), TargQVals=((q1_pi_targ+q2_pi_targ)/2).cpu().detach().numpy())
 
     return loss_q, q_info
 
   # Set up function for computing SAC pi loss
   def compute_loss_pi(self, data):
     o = data['obs']
-    pi, logp_pi, action_range = self.ac.pi(o)
-    q1_pi = self.ac.q1(o, pi)
-    q2_pi = self.ac.q2(o, pi)
+    action, logp_pi = self.ac.pi(o)
+    q1_pi = self.ac.q1(o, action)
+    q2_pi = self.ac.q2(o, action)
     q_pi = torch.min(q1_pi, q2_pi)
-
-    self.logger.store(PiRange0=action_range[:, 0].detach().numpy())
-    self.logger.store(PiRange1=action_range[:, 1].detach().numpy())
 
     # Entropy-regularized policy loss
     loss_pi = (self.alpha * logp_pi - q_pi).mean()
+    self.logger.store(QContribPiLoss=(torch.abs(q_pi) / (torch.abs(q_pi) + torch.abs(self.alpha * logp_pi))).mean().cpu().detach().numpy())
 
     # Useful info for logging
-    pi_info = dict(LogPi=logp_pi.detach().numpy())
+    pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
 
     return loss_pi, pi_info
 
