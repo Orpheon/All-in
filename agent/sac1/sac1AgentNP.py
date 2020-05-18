@@ -8,7 +8,7 @@ import torch
 import itertools
 import os
 import numpy as np
-import time
+import json
 
 import constants
 
@@ -276,3 +276,20 @@ class Sac1AgentNP(BaseAgentLoadable):
     self.ac.load(self.config['checkpoint_path'])
     self.pi_optimizer.load_state_dict(torch.load(os.path.join(self.config['checkpoint_path'], 'pi_opt.optb')))
     self.q_optimizer.load_state_dict(torch.load(os.path.join(self.config['checkpoint_path'], 'q_opt.optb')))
+
+  def spawn_clone(self):
+    root = os.path.join("sac1", "frozen-models")
+    os.makedirs(root, exist_ok=True)
+    new_agent_uuid = "".join(np.random.randint(0, 9, 12).tolist())
+    path = os.join(root, new_agent_uuid)
+    self.ac.save(path)
+
+    with open(self._config_file_path(), 'r') as f:
+      config_data = json.load(f)
+    config_data['agent_ids'][new_agent_uuid] = {
+      "trainable": False,
+      "device": "cuda",
+      "model_path": path,
+    }
+    with open(self._config_file_path(), 'w') as f:
+      json.dump(config_data, f)
