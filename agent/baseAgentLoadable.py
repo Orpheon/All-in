@@ -18,16 +18,15 @@ class BaseAgentLoadable(BaseAgentNP):
     return str(self)
 
   @classmethod
-  def available_agent_ids(cls):
+  def available_agents(cls):
     with open(cls._config_file_path(), 'r') as f:
       config = json.loads(f.read())
-      agent_ids = config['agent_ids'].keys()
-    return agent_ids
+      return [(agent_id, agent_info['matchup_info']) for agent_id, agent_info in config['agent_ids'].items()]
 
   @classmethod
   def from_id(cls, agent_id):
     with open(cls._config_file_path(), 'r') as f:
-      config = json.loads(f.read())['agent_ids'][agent_id]
+      config = json.loads(f.read())['agent_ids'][agent_id]['setup']
       return cls(agent_id, config)
 
   @classmethod

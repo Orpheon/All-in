@@ -1,8 +1,12 @@
-
-{"agent_ids":  {
-  "mutater": {
-    "trainable": true,
-    "checkpoint_path": "sac1/checkpoints",
-    "device": "cuda"
+{
+  "agent_ids": {
+    "mutater": {
+      "matchup_info": {},
+      "setup": {
+        "trainable": true,
+        "checkpoint_path": "sac1/checkpoints",
+        "device": "cuda"
+      }
+    }
   }
-}}
+}

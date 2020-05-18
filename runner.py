@@ -13,14 +13,20 @@ from league.logger import GenericLogger
 
 
 def generate_matchup(all_agent_types):
-  available_agents = [(a_type, a_id) for a_type in all_agent_types for a_id in a_type.available_agent_ids()]
-  picked_agents = random.sample(available_agents, 6)
-  return [a_type.from_id(a_id) for a_type, a_id in picked_agents]
+  mutators = []
+  comparisons = []
+  available_matchup_infos = [(a_type, agent_info) for a_type in all_agent_types for agent_info in a_type.available_agents()]
 
+  # random select
+  available_ids = [(a_type, a_info[0]) for a_type, a_info in available_matchup_infos]
+
+  picked_agents = random.sample(available_ids, 6)
+  instantiated = [a_type.from_id(a_id) for a_type, a_id in picked_agents]
+  return instantiated
 
 if __name__ == '__main__':
   # all_agent_types = [RandomAgentNP, Sac1AgentNP, CallAgentNP]
-  all_agent_types = [CallAgentNP, Sac1AgentNP]
+  all_agent_types = [CallAgentNP, RandomAgentNP]
 
   BATCH_SIZE = 10000
   INITIAL_CAPITAL = 200
