@@ -111,8 +111,9 @@ class GameEngine:
       running_games = np.nonzero(round_countdown > 0)[0]
 
       for player_idx, player in player_order:
-        actions, amounts = player.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
-                                      last_raiser, hole_cards[:, player_idx, :], community_cards)
+        actions, amounts = player.act(player_idx, round, round_countdown > 0, current_bets, min_raise,
+                                      prev_round_investment, folded, last_raiser, hole_cards[:, player_idx, :],
+                                      community_cards)
         # Disabled when not necessary because it bloats the log size (by ~500 kB or so, which triples the size)
         # self.logger.log(constants.EV_PLAYER_ACTION, (round, player_idx, actions, amounts, round_countdown, folded[:, player_idx]))
 

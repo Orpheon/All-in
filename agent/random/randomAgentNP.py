@@ -10,8 +10,8 @@ class RandomAgentNP(BaseAgentLoadable):
 
     self.rng = np.random.RandomState()
 
-  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards, community_cards):
-    self.rng.seed(hole_cards.sum(axis=-1))
+  def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
+          hole_cards, community_cards):
     actions = self.rng.randint(0, 3, min_raise.size).astype(int)
     amounts = (self.rng.rand(min_raise.size) * 5).astype(int)
     return actions, amounts

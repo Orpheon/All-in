@@ -25,6 +25,7 @@ class Sac1AgentNP(BaseAgentLoadable):
 
   def start_game(self, batch_size, initial_capital, n_players, alpha=0.01, gamma=0.99, polyak=0.995, learning_rate=0.01):
     self.BATCH_SIZE = batch_size
+    self.REPLAY_BATCH_SIZE = 1000
     self.INITAL_CAPITAL = initial_capital
     self.N_PLAYERS = n_players
 
@@ -46,8 +47,10 @@ class Sac1AgentNP(BaseAgentLoadable):
       for parameter in self.target_ac.parameters():
         parameter.requires_grad = False
 
-      self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim, act_dim=self.act_dim,
-                                                    size=15 * self.BATCH_SIZE)
+      self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim,
+                                                    act_dim=self.act_dim,
+                                                    size=30 * self.BATCH_SIZE,
+                                                    device=self.config['device'])
 
       self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=learning_rate)
       self.q_optimizer = torch.optim.Adam(itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()),
@@ -60,8 +63,8 @@ class Sac1AgentNP(BaseAgentLoadable):
       if os.path.exists(self.config['checkpoint_path']):
         self.load_checkpoint()
 
-  def act(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards,
-          community_cards):
+  def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
+          hole_cards, community_cards):
     state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
 
@@ -69,7 +72,13 @@ class Sac1AgentNP(BaseAgentLoadable):
 
     if self.config['trainable']:
       if not self.first_round:
-        self.replaybuffer.store(self.prev_state, self.prev_action, 0, state, False, self.BATCH_SIZE)
+        n_rounds = active_rounds.sum()
+        self.replaybuffer.store(obs=self.prev_state[active_rounds],
+                                act=self.prev_action[active_rounds],
+                                rew=np.zeros(n_rounds),
+                                next_obs=state[active_rounds],
+                                done=np.zeros(n_rounds),
+                                batch_size=n_rounds)
       self.first_round = False
       self.prev_state = state
       self.prev_action = network_output
