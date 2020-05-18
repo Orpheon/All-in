@@ -20,7 +20,7 @@ def generate_matchup(all_agent_types):
 
 if __name__ == '__main__':
   # all_agent_types = [RandomAgentNP, Sac1AgentNP, CallAgentNP]
-  all_agent_types = [RandomAgentNP, Sac1AgentNP]
+  all_agent_types = [CallAgentNP, Sac1AgentNP]
 
   BATCH_SIZE = 10000
   INITIAL_CAPITAL = 200
@@ -37,9 +37,10 @@ if __name__ == '__main__':
   #rating.load_ratings()
   while True:
     matchup = generate_matchup(all_agent_types)
-    print("Matchup:", " ".join(str(m) for m in matchup))
+    print("\nMatchup:", " ".join(str(m) for m in matchup))
     total_winnings = game_engine.run_game(matchup)
     winnings = np.sum(total_winnings, axis=0).tolist()
+    print("Winnings:", " ".join(str(m)+": "+str(w / BATCH_SIZE) for m, w in zip(matchup, winnings)))
     placings = [str(i[1]) for i in sorted(list(zip(winnings, matchup)), key=itemgetter(0), reverse=True)]
     rating.update_from_placings(placings)
     rating.save_ratings()
