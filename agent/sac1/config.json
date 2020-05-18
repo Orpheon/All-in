@@ -3,6 +3,6 @@
   "mutater": {
     "trainable": true,
     "checkpoint_path": "sac1/checkpoints",
-    "device": "cpu"
+    "device": "cuda"
   }
 }}
