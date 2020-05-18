@@ -89,20 +89,29 @@ class Sac1AgentNP(BaseAgentLoadable):
 
     return actions, amounts
 
-  def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser, hole_cards, community_cards, gains):
+  def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
+                     hole_cards, community_cards, gains):
     if self.config['trainable']:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
-      self.replaybuffer.store(self.prev_state, self.prev_action, gains / self.INITAL_CAPITAL, state, True, self.BATCH_SIZE)
+      scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS/2 - 1)) * 2 / self.N_PLAYERS
+      self.replaybuffer.store(obs=self.prev_state,
+                              act=self.prev_action,
+                              rew=scaled_gains,
+                              next_obs=state,
+                              done=np.ones(self.BATCH_SIZE),
+                              batch_size=self.BATCH_SIZE)
+      self.logger.store(Reward=scaled_gains)
       self.train()
       self.save_checkpoint()
 
   def train(self):
     self.replaybuffer.shuffle()
-    batch = self.replaybuffer.sample_batch(batch_size=min(1000, self.BATCH_SIZE))
+    batch = self.replaybuffer.sample_batch(batch_size=min(self.REPLAY_BATCH_SIZE, self.BATCH_SIZE))
+
     while batch:
       self.update_parameters(batch)
-      batch = self.replaybuffer.sample_batch(batch_size=min(1000, self.BATCH_SIZE))
+      batch = self.replaybuffer.sample_batch(batch_size=min(self.REPLAY_BATCH_SIZE, self.BATCH_SIZE))
 
     self.log_everything()
 
