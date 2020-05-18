@@ -23,7 +23,8 @@ class Sac1AgentNP(BaseAgentLoadable):
 
   logger = EpochLogger(output_dir='sac1/logs', output_fname='progress.csv')
 
-  def start_game(self, batch_size, initial_capital, n_players, alpha=0.01, gamma=0.99, polyak=0.995, learning_rate=0.01):
+  def start_game(self, batch_size, initial_capital, n_players, alpha=0.0005, gamma=1.0, polyak=0.995,
+                 q_learning_rate=0.001, pi_learning_rate=0.1):
     self.BATCH_SIZE = batch_size
     self.REPLAY_BATCH_SIZE = 1000
     self.INITAL_CAPITAL = initial_capital
@@ -52,9 +53,9 @@ class Sac1AgentNP(BaseAgentLoadable):
                                                     size=30 * self.BATCH_SIZE,
                                                     device=self.config['device'])
 
-      self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=learning_rate)
+      self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=pi_learning_rate)
       self.q_optimizer = torch.optim.Adam(itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()),
-                                          lr=learning_rate)
+                                          lr=q_learning_rate)
 
       self.first_round = True
       self.prev_state = None
