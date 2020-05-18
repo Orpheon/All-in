@@ -286,10 +286,16 @@ class Sac1AgentNP(BaseAgentLoadable):
 
     with open(self._config_file_path(), 'r') as f:
       config_data = json.load(f)
+
     config_data['agent_ids'][new_agent_uuid] = {
-      "trainable": False,
-      "device": "cuda",
-      "model_path": path,
+      "setup": self.config,
+      "matchup_info": {
+        "type": "teacher"
+      }
     }
+    config_data['agent_ids'][new_agent_uuid]["setup"]["trainable"] = False
+    config_data['agent_ids'][new_agent_uuid]["setup"]["model_path"] = path
+
+
     with open(self._config_file_path(), 'w') as f:
       json.dump(config_data, f)
