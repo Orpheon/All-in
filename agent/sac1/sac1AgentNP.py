@@ -39,7 +39,7 @@ class Sac1AgentNP(BaseAgentLoadable):
     # Action dimension (call and raise ceiling)
     self.act_dim = 2
 
-    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.config['trainable'])
+    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.config['trainable'], device=self.config['device'])
 
     if self.config['trainable']:
       self.target_ac = deepcopy(self.ac)

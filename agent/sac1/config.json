@@ -2,6 +2,7 @@
 {"agent_ids":  {
   "mutater": {
     "trainable": true,
-    "checkpoint_path": "sac1/checkpoints"
+    "checkpoint_path": "sac1/checkpoints",
+    "device": "cpu"
   }
 }}

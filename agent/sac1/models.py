@@ -74,24 +74,28 @@ class MLPQFunction(nn.Module):
 
 class MLPActorCritic(nn.Module):
 
-  def __init__(self, obs_dim, act_dim, act_limit, hidden_sizes=(256,256),
-         activation=nn.ReLU, trainable=True):
+  def __init__(self, obs_dim, act_dim, act_limit, hidden_sizes=(256,256,256,256),
+         activation=nn.LeakyReLU, trainable=True, device="cpu"):
     super().__init__()
 
     self.trainable = trainable
+    self.device = device
 
     # build policy and value functions
     self.pi = SquashedGaussianMLPActor(obs_dim, act_dim, hidden_sizes, activation, act_limit)
+    self.pi.to(device)
     if self.trainable:
       self.q1 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
       self.q2 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
+      self.q1.to(device)
+      self.q2.to(device)
     else:
       self.pi.eval()
 
   def act(self, obs, deterministic=False):
     with torch.no_grad():
-      a, _, _ = self.pi(obs, deterministic, False)
-      return a.numpy()
+      a, _, _, _ = self.pi(obs.to(self.device), deterministic, False)
+      return a.cpu().numpy()
 
   def save(self, path):
     os.makedirs(path, exist_ok=True)
