@@ -36,10 +36,10 @@ class Sac1AgentNP(BaseAgentLoadable):
 
     # 5 community cards x 53 (52 cards + "unknown") + 2 holecards x 52,
     # (1 position in this round + 1 folded + 1 pot investment total + 1 pot investment this round + 1 which player last raised) x 6
-    # round x 4 (1h) + min_bet
-    self.obs_dim = (5) * 53 + (2) * 52 + (1 + 1 + 1 + 1 + 1) * 6 + (1) * 5 + 1
-    # Action dimension (call and raise ceiling)
-    self.act_dim = 2
+    # round x 4 (1h)
+    self.obs_dim = (5) * 53 + (2) * 52 + (1 + 1 + 1 + 1 + 1) * 6 + (1) * 5
+    # Action dimensions
+    self.act_dim = 4
 
     self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.config['trainable'], device=self.config['device'])
 
@@ -104,6 +104,7 @@ class Sac1AgentNP(BaseAgentLoadable):
       self.logger.store(Reward=scaled_gains)
       self.train()
       self.save_checkpoint()
+      # FIXME: Remember that replaybuffer is *not* emptied here
 
   def train(self):
     self.replaybuffer.shuffle()
@@ -139,51 +140,48 @@ class Sac1AgentNP(BaseAgentLoadable):
     known_community_cards_1h = (np.arange(53) == community_cards_converted[..., None] - 1).astype(int)
     # Fill missing community cards with zero
     missing_community_cards = np.zeros((self.BATCH_SIZE, 5 - community_cards.shape[1], 53))
+    # Have a 53rd column in the 1h to indicate missing cards, and fill that with ones where relevant
     missing_community_cards[:, :, -1] = 1
     community_cards_1h = np.concatenate((known_community_cards_1h, missing_community_cards), axis=1)
 
     player_data = np.zeros((self.BATCH_SIZE, 5, self.N_PLAYERS))
-    # Which player are we
-    player_data[:, 0, player_idx] = 1
     # Who folded already
-    player_data[:, 1, :] = folded
+    player_data[:, 0, :] = folded
     # Who put how much total into the pot
-    player_data[:, 2, :] = (prev_round_investment + current_bets) / self.INITAL_CAPITAL
+    player_data[:, 1, :] = (prev_round_investment + current_bets) / self.INITAL_CAPITAL
     # Who put how much this round
-    player_data[:, 3, :] = (current_bets) / self.INITAL_CAPITAL
+    player_data[:, 2, :] = (current_bets) / self.INITAL_CAPITAL
     # Who was the last to raise
-    player_data[:, 4, :] = np.eye(self.N_PLAYERS)[last_raiser]
+    player_data[:, 3, :] = np.eye(self.N_PLAYERS)[last_raiser]
+    # Reorder the first four to correspond to player_idx
+    player_data = np.concatenate((player_data[:, :, player_idx:], player_data[:, :, :player_idx]), axis=2)
+    # Which player are we
+    player_data[:, 4, player_idx] = 1
 
-    tail_data = np.zeros((self.BATCH_SIZE, 5 + 1))
+    tail_data = np.zeros((self.BATCH_SIZE, 5))
     tail_data[:, round] = 1
-    tail_data[:, -1] = min_raise / self.INITAL_CAPITAL
 
     network_input = np.concatenate((hole_cards_1h.reshape(self.BATCH_SIZE, -1),
                                     community_cards_1h.reshape(self.BATCH_SIZE, -1),
                                     player_data.reshape(self.BATCH_SIZE, -1), tail_data.reshape(self.BATCH_SIZE, -1)),
                                    axis=1)
+
     assert (network_input.shape[1] == self.obs_dim)
 
     return network_input
 
   def interpret_network_output(self, network_output, current_bets, prev_round_investment, min_raise):
 
-    actions = np.zeros(self.BATCH_SIZE, dtype=int)
-    amounts = np.zeros(self.BATCH_SIZE, dtype=int)
-
-    actions[:] = constants.FOLD
+    chosen_action = np.argmax(network_output[:, :3], axis=1)
+    actions = np.array([constants.FOLD, constants.CALL, constants.RAISE])[chosen_action]
 
     current_stake = current_bets + prev_round_investment
-    desired_raises = current_stake + min_raise < (network_output[:, 0] + 1) * self.INITAL_CAPITAL / 2
-    desired_calls = current_stake < (network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2
+    amounts = np.clip((network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2, min_raise, self.INITAL_CAPITAL - current_stake)
 
-    actions[desired_raises] = constants.RAISE
-    amounts[desired_raises] = network_output[desired_raises, 0] - current_stake[desired_raises]
-
-    actions[desired_calls & np.logical_not(desired_raises)] = constants.CALL
-
-    self.logger.store(RaiseTarget=((network_output[:, 0] + 1) * self.INITAL_CAPITAL / 2).mean(),
-                      CallTarget=((network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2).mean())
+    self.logger.store(Raises=100*np.mean(actions == constants.RAISE),
+                      Calls=100*np.mean(actions == constants.CALL),
+                      Folds=100*np.mean(actions == constants.FOLD),
+                      )
 
     return actions, amounts
 
