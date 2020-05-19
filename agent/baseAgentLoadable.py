@@ -11,14 +11,7 @@ class BaseAgentLoadable(BaseAgentNP):
     self.config = config
 
   def __str__(self):
-    err_msg = self._build_err_msg("__str__")
-    raise NotImplementedError(err_msg)
-
-  def get_name(self):
-    return str(self)
-
-  def spawn_clone(self):
-    pass
+    return self.agent_id
 
   @classmethod
   def available_agents(cls):

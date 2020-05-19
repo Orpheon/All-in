@@ -10,9 +10,6 @@ class CallAgentNP(BaseAgentLoadable):
     amounts = np.zeros_like(min_raise)
     return actions, amounts
 
-  def __str__(self):
-    return 'CallAgentNP_{0}'.format(self.agent_id)
-
   @classmethod
   def _config_file_path(cls):
     return './agent/call/config.json'

@@ -1,13 +1,13 @@
 {
   "agent_ids": {
-    "mutater": {
+    "Sac1-mutater": {
       "matchup_info": {
         "type": "learner"
       },
       "setup": {
-        "trainable": true,
         "checkpoint_path": "sac1/checkpoints",
-        "device": "cuda"
+        "device": "cuda",
+        "trainable": true
       }
     }
   }

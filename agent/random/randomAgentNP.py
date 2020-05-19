@@ -16,9 +16,6 @@ class RandomAgentNP(BaseAgentLoadable):
     amounts = (self.rng.rand(min_raise.size) * 5).astype(int)
     return actions, amounts
 
-  def __str__(self):
-    return 'RandomAgentNP_{0}'.format(self.agent_id)
-
   @classmethod
   def _config_file_path(cls):
     return './agent/random/config.json'

@@ -14,9 +14,6 @@ import constants
 
 
 class Sac1AgentNP(BaseAgentLoadable):
-  def __str__(self):
-    return 'SacAgent1_{0}'.format(self.agent_id)
-
   @classmethod
   def _config_file_path(cls):
     return './agent/sac1/config.json'
@@ -280,8 +277,8 @@ class Sac1AgentNP(BaseAgentLoadable):
   def spawn_clone(self):
     root = os.path.join("sac1", "frozen-models")
     os.makedirs(root, exist_ok=True)
-    new_agent_uuid = "".join(np.random.randint(0, 9, 12).tolist())
-    path = os.join(root, new_agent_uuid)
+    new_agent_uuid = "Sac1-"+"".join(str(x) for x in np.random.randint(0, 9, 8).tolist())
+    path = os.path.join(root, new_agent_uuid)
     self.ac.save(path)
 
     with open(self._config_file_path(), 'r') as f:
@@ -298,4 +295,4 @@ class Sac1AgentNP(BaseAgentLoadable):
 
 
     with open(self._config_file_path(), 'w') as f:
-      json.dump(config_data, f)
+      json.dump(config_data, f, indent=2, sort_keys=True)
