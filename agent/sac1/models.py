@@ -95,11 +95,12 @@ class MLPActorCritic(nn.Module):
       a, _, = self.pi(obs.to(self.device), deterministic, False)
       return a.cpu().numpy()
 
-  def save(self, path):
+  def save(self, path, policy_only=False):
     os.makedirs(path, exist_ok=True)
     torch.save(self.pi.state_dict(), os.path.join(path, 'policy.modelb'))
-    torch.save(self.q1.state_dict(), os.path.join(path, 'q1.modelb'))
-    torch.save(self.q2.state_dict(), os.path.join(path, 'q2.modelb'))
+    if not policy_only:
+      torch.save(self.q1.state_dict(), os.path.join(path, 'q1.modelb'))
+      torch.save(self.q2.state_dict(), os.path.join(path, 'q2.modelb'))
 
   def load(self, path):
     self.pi.load_state_dict(torch.load(os.path.join(path, 'policy.modelb')))

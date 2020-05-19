@@ -284,7 +284,7 @@ class Sac1AgentNP(BaseAgentLoadable):
     os.makedirs(root, exist_ok=True)
     new_agent_uuid = self.config['root_path'].capitalize()+"-"+"".join(str(x) for x in np.random.randint(0, 9, 8).tolist())
     path = os.path.join(root, new_agent_uuid)
-    self.ac.save(path)
+    self.ac.save(path, policy_only=True)
 
     with open(self._config_file_path(), 'r') as f:
       config_data = json.load(f)
