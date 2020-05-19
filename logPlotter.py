@@ -28,6 +28,7 @@ class LogfileCollector:
   root_path = './gamelogs/'
   game_winnings = []
   cashflows = []
+  folding_losses = []
 
   def plot_game_winnings(self):
     players = set()
@@ -37,31 +38,47 @@ class LogfileCollector:
 
     for p in players:
       winnings = [gw.get(p, 0) for gw in self.game_winnings]
-      plt.plot(winnings, label=p, marker='*')
+      plt.plot(winnings, label=p, marker='^')
     plt.legend()
+    plt.title('game winnings')
     plt.xlabel('game index')
     plt.ylabel('winning')
     plt.show()
 
   def plot_cashflow(self):
-    for idx, game in enumerate(self.cashflows):
+    for idx, game in reversed(enumerate(self.cashflows)):
       cashflow_list = []
       for spender_idx in range(6):
         for receiver_idx in range(6):
-          cashflow_list.append([game[0][spender_idx], game[0][receiver_idx], int(game[1][receiver_idx][spender_idx])])
+          cashflow_list.append([game[0][spender_idx], game[0][receiver_idx], float(game[1][receiver_idx][spender_idx])])
 
       cashflow_data = pandas.DataFrame(np.array(cashflow_list))
       cashflow_data.columns = ['spender', 'receiver', 'amount']
       cashflow_data['spender'] = cashflow_data['spender'].astype('category')
       cashflow_data['receiver'] = cashflow_data['receiver'].astype('category')
-      cashflow_data['amount'] = cashflow_data['amount'].astype('int64')
+      cashflow_data['amount'] = cashflow_data['amount'].astype('float64')
       cashflow_pivot = cashflow_data.pivot('spender', 'receiver', 'amount')
 
       f, ax = plt.subplots(figsize=(9, 6))
-      sns.heatmap(cashflow_pivot, annot=True, fmt="d", linewidths=.5, ax=ax, cmap='Blues')
+      sns.heatmap(cashflow_pivot, annot=True, fmt=".3f", linewidths=.5, ax=ax, cmap='Blues')
       plt.tight_layout()
       plt.title('game {}/{}'.format(idx+1, len(self.cashflows)))
       plt.show()
+
+  def plot_fold_loss(self):
+    players = set()
+    for game_winning in self.game_winnings:
+      for p in game_winning.keys():
+        players.add(p)
+
+    for p in players:
+      folding_losses = [fl.get(p, 0) for fl in self.folding_losses]
+      plt.plot(folding_losses, label=p, marker='v')
+    plt.legend()
+    plt.title('folding losses')
+    plt.xlabel('game index')
+    plt.ylabel('loss')
+    plt.show()
 
   def load_n_most_recent_logfiles(self, n):
     file_names = [self.root_path + fn for fn in listdir(self.root_path) if isfile(self.root_path + fn) and fn.endswith('bz2')]
@@ -80,30 +97,39 @@ class LogfileCollector:
     card_values = data[0]
     winnings = data[1]
     players = data[2]
-    winnings_sum = np.sum(winnings, NP_VERTICAL)
+    folded = data[3]
+
+    n_games = winnings.shape[0]
+
+    #winnings
+    winnings_sum = np.sum(winnings, NP_VERTICAL) / n_games
     self.game_winnings.append({p: w for p, w in zip(players, winnings_sum)})
 
+    #cashflow
     receivers = winnings > 0
     spenders = winnings < 0
 
-    no_receivers = np.sum(receivers, NP_HORIZONTAL).reshape(len(receivers), 1)
+    n_receivers = np.sum(receivers, NP_HORIZONTAL).reshape(len(receivers), 1)
 
     zero_games = []
-    for i, nsp in enumerate(no_receivers):
+    for i, nsp in enumerate(n_receivers):
       if nsp[0] == 0:
         zero_games.append(i)
-        # print(i, winnings[i], card_values[i])
 
     clean_receivers = np.delete(receivers, zero_games, axis=NP_VERTICAL)
     clean_winnings = np.delete(winnings, zero_games, axis=NP_VERTICAL)
     clean_spenders = np.delete(spenders, zero_games, axis=NP_VERTICAL)
-    clean_no_receivers = np.delete(no_receivers, zero_games, axis=NP_VERTICAL)
+    clean_n_receivers = np.delete(n_receivers, zero_games, axis=NP_VERTICAL)
 
-    spendings_each = clean_spenders * clean_winnings * -1 / clean_no_receivers
+    spendings_each = clean_spenders * clean_winnings * -1 / clean_n_receivers
     spendings_each = np.floor(spendings_each)
 
     cashflow_matrix = clean_receivers.transpose().dot(spendings_each)
-    self.cashflows.append((players, cashflow_matrix))
+    self.cashflows.append((players, cashflow_matrix / n_games))
+
+    # loss
+    folding_loss = np.sum(winnings * folded, NP_VERTICAL) / n_games
+    self.folding_losses.append({p: fl for p, fl in zip(players, folding_loss)})
 
 
   def load_logfile(self, file_path):
@@ -111,102 +137,15 @@ class LogfileCollector:
       data = pickle.load(f)
     return data
 
-
-class LogPlotter:
-  path = 'logs/evaluation_2020-04-09_182218.json'
-
-  def load_file(self):
-    with open(self.path, 'r') as f:
-      file_content = f.read()
-      self._data = json.loads(file_content)
-
-  def show_bet_frequencies(self, data: pandas.DataFrame):
-    pivot = data.pivot('bet_amount', 'card_value', 'frequency')
-    sns.relplot(x="card_value", y="bet_amount", size="frequency",
-                alpha=.5, palette="muted", data=data)
-    plt.title(player)
-    plt.show()
-    plt.close()
-
-
-def cardval_from_str(hole):
-  cards = [Card(rank_map[card[0]], suit_map[card[1]]) for card in hole]
-  return HandEvaluator.evaluate_hand(cards[0:2], cards[2:5])
-
-
 if __name__ == '__main__':
 
+  RELEVANT_LOGFILES = 100
+
   logfile_collector = LogfileCollector()
-  logfile_collector.load_n_most_recent_logfiles(1000000)
+  logfile_collector.load_n_most_recent_logfiles(RELEVANT_LOGFILES)
 
   game_winnings = logfile_collector.game_winnings
 
   logfile_collector.plot_game_winnings()
+  logfile_collector.plot_fold_loss()
   logfile_collector.plot_cashflow()
-
-
-  #TODO:
-  exit()
-
-  lp = LogPlotter()
-  lp.load_file()
-
-  all_players = {seat['uuid']: seat['name'] for seat in lp._data['round_1']['round_state']['seats']}
-  action_data = {player: {} for player in all_players.values()}
-  cashflow = {name_from: {name_to: 0 for name_to in all_players.values()} for name_from in all_players.values()}
-
-  # collect data
-  for round in lp._data.values():
-    seat_holecard = {seat['uuid']: seat['hole_card'] for seat in round['round_state']['seats']}
-
-    losses = {seat['name']: 200 - seat['stack'] for seat in round['round_state']['seats']}
-    spenders = [name for name, loss in losses.items() if loss > 0]
-    receivers = [name for name, loss in losses.items() if loss < 0]
-
-    for spender in spenders:
-      for receiver in receivers:
-        cashflow[spender][receiver] += losses[spender] / len(receivers)
-
-    for _, round in round['round_state']['action_histories'].items():
-      for action in round:
-        if action['action'] != 'SMALLBLIND' and action['action'] != 'BIGBLIND':
-          card_val = cardval_from_str(seat_holecard[action['uuid']])
-          bet_amount = action.get('amount', 0)
-          p_name = all_players[action['uuid']]
-          action_data[p_name][(card_val, bet_amount)] = action_data[p_name].get((card_val, bet_amount), 0) + 1
-
-  # transform data
-  cashflow_list = []
-  for spender, receivers in cashflow.items():
-    for receiver, amount in receivers.items():
-      cashflow_list.append([spender, receiver, int(amount)])
-
-  cashflow_data = pandas.DataFrame(np.array(cashflow_list))
-  cashflow_data.columns = ['spender', 'receiver', 'amount']
-  cashflow_data['spender'] = cashflow_data['spender'].astype('category')
-  cashflow_data['receiver'] = cashflow_data['receiver'].astype('category')
-  cashflow_data['amount'] = cashflow_data['amount'].astype('int64')
-
-  cashflow_pivot = cashflow_data.pivot('spender', 'receiver', 'amount')
-
-  f, ax = plt.subplots(figsize=(9, 6))
-  sns.heatmap(cashflow_pivot, annot=True, fmt="d", linewidths=.5, ax=ax)
-  plt.tight_layout()
-  plt.show()
-
-  for player, actions in action_data.items():
-
-    bet_amount_hist = []
-    for act,freq in actions.items():
-      for _ in range(freq):
-        bet_amount_hist.append(act[1])
-    plt.hist(bet_amount_hist, bins=100)
-    plt.title(player)
-    plt.show()
-
-    data_array = np.array([[act[0], act[1], freq] for act, freq in actions.items()])
-
-    data = pandas.DataFrame(data_array)
-    data.columns = ['card_value', 'bet_amount', 'frequency']
-
-    lp.show_bet_frequencies(data)
