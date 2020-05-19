@@ -1,12 +1,557 @@
 {
   "agent_ids": {
-    "Sac1-mutater": {
+    "Sac1-1-24052511": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-1/frozen-models/Sac1-1-24052511",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-1",
+        "trainable": false
+      }
+    },
+    "Sac1-1-33605008": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-1/frozen-models/Sac1-1-33605008",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-1",
+        "trainable": false
+      }
+    },
+    "Sac1-1-50381567": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-1/frozen-models/Sac1-1-50381567",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-1",
+        "trainable": false
+      }
+    },
+    "Sac1-1-51470317": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-1/frozen-models/Sac1-1-51470317",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-1",
+        "trainable": false
+      }
+    },
+    "Sac1-1-68250836": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-1/frozen-models/Sac1-1-68250836",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-1",
+        "trainable": false
+      }
+    },
+    "Sac1-1-71336480": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-1/frozen-models/Sac1-1-71336480",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-1",
+        "trainable": false
+      }
+    },
+    "Sac1-2-10644678": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-2/frozen-models/Sac1-2-10644678",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-2",
+        "trainable": false
+      }
+    },
+    "Sac1-2-14607758": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-2/frozen-models/Sac1-2-14607758",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-2",
+        "trainable": false
+      }
+    },
+    "Sac1-2-15852614": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-2/frozen-models/Sac1-2-15852614",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-2",
+        "trainable": false
+      }
+    },
+    "Sac1-2-22881548": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-2/frozen-models/Sac1-2-22881548",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-2",
+        "trainable": false
+      }
+    },
+    "Sac1-2-77657186": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-2/frozen-models/Sac1-2-77657186",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-2",
+        "trainable": false
+      }
+    },
+    "Sac1-2-82705800": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-2/frozen-models/Sac1-2-82705800",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-2",
+        "trainable": false
+      }
+    },
+    "Sac1-3-03411658": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 0.95,
+        "model_path": "sac1-3/frozen-models/Sac1-3-03411658",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-3",
+        "trainable": false
+      }
+    },
+    "Sac1-3-61715115": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 0.95,
+        "model_path": "sac1-3/frozen-models/Sac1-3-61715115",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-3",
+        "trainable": false
+      }
+    },
+    "Sac1-3-74218700": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 0.95,
+        "model_path": "sac1-3/frozen-models/Sac1-3-74218700",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-3",
+        "trainable": false
+      }
+    },
+    "Sac1-3-75226456": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 0.95,
+        "model_path": "sac1-3/frozen-models/Sac1-3-75226456",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-3",
+        "trainable": false
+      }
+    },
+    "Sac1-3-77648051": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 0.95,
+        "model_path": "sac1-3/frozen-models/Sac1-3-77648051",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-3",
+        "trainable": false
+      }
+    },
+    "Sac1-3-82757745": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 0.95,
+        "model_path": "sac1-3/frozen-models/Sac1-3-82757745",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-3",
+        "trainable": false
+      }
+    },
+    "Sac1-4-15602824": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-4/frozen-models/Sac1-4-15602824",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.999,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-4",
+        "trainable": false
+      }
+    },
+    "Sac1-4-16543210": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-4/frozen-models/Sac1-4-16543210",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.999,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-4",
+        "trainable": false
+      }
+    },
+    "Sac1-4-22860258": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-4/frozen-models/Sac1-4-22860258",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.999,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-4",
+        "trainable": false
+      }
+    },
+    "Sac1-4-30075153": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-4/frozen-models/Sac1-4-30075153",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.999,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-4",
+        "trainable": false
+      }
+    },
+    "Sac1-4-37803020": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-4/frozen-models/Sac1-4-37803020",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.999,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-4",
+        "trainable": false
+      }
+    },
+    "Sac1-4-77356643": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-4/frozen-models/Sac1-4-77356643",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.999,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-4",
+        "trainable": false
+      }
+    },
+    "Sac1-5-06655002": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-5/frozen-models/Sac1-5-06655002",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.01,
+        "root_path": "sac1-5",
+        "trainable": false
+      }
+    },
+    "Sac1-5-54377064": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-5/frozen-models/Sac1-5-54377064",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.01,
+        "root_path": "sac1-5",
+        "trainable": false
+      }
+    },
+    "Sac1-5-68114514": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-5/frozen-models/Sac1-5-68114514",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.01,
+        "root_path": "sac1-5",
+        "trainable": false
+      }
+    },
+    "Sac1-5-68543224": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-5/frozen-models/Sac1-5-68543224",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.01,
+        "root_path": "sac1-5",
+        "trainable": false
+      }
+    },
+    "Sac1-5-81836457": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-5/frozen-models/Sac1-5-81836457",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.01,
+        "root_path": "sac1-5",
+        "trainable": false
+      }
+    },
+    "Sac1-5-86750465": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "model_path": "sac1-5/frozen-models/Sac1-5-86750465",
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.01,
+        "root_path": "sac1-5",
+        "trainable": false
+      }
+    },
+    "Sac1-mutater-1": {
       "matchup_info": {
         "type": "learner"
       },
       "setup": {
-        "checkpoint_path": "sac1/checkpoints",
+        "alpha": 0.0005,
         "device": "cuda",
+        "gamma": 1.0,
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-1",
+        "trainable": true
+      }
+    },
+    "Sac1-mutater-2": {
+      "matchup_info": {
+        "type": "learner"
+      },
+      "setup": {
+        "alpha": 0.005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-2",
+        "trainable": true
+      }
+    },
+    "Sac1-mutater-3": {
+      "matchup_info": {
+        "type": "learner"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 0.95,
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-3",
+        "trainable": true
+      }
+    },
+    "Sac1-mutater-4": {
+      "matchup_info": {
+        "type": "learner"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "pi_learning_rate": 0.1,
+        "polyak": 0.999,
+        "q_learning_rate": 0.001,
+        "root_path": "sac1-4",
+        "trainable": true
+      }
+    },
+    "Sac1-mutater-5": {
+      "matchup_info": {
+        "type": "learner"
+      },
+      "setup": {
+        "alpha": 0.0005,
+        "device": "cuda",
+        "gamma": 1.0,
+        "pi_learning_rate": 0.1,
+        "polyak": 0.995,
+        "q_learning_rate": 0.01,
+        "root_path": "sac1-5",
         "trainable": true
       }
     }

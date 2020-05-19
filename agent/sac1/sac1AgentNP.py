@@ -18,18 +18,19 @@ class Sac1AgentNP(BaseAgentLoadable):
   def _config_file_path(cls):
     return './agent/sac1/config.json'
 
-  logger = EpochLogger(output_dir='sac1/logs', output_fname='progress.csv')
+  # logger = EpochLogger(output_dir='sac1/logs', output_fname='progress.csv')
 
-  def initialize(self, batch_size, initial_capital, n_players, alpha=0.0005, gamma=1.0, polyak=0.995,
-                 q_learning_rate=0.001, pi_learning_rate=0.1):
+  def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
     self.REPLAY_BATCH_SIZE = 1000
     self.INITAL_CAPITAL = initial_capital
     self.N_PLAYERS = n_players
 
-    self.alpha = alpha
-    self.gamma = gamma
-    self.polyak = polyak
+    self.alpha = self.config['alpha']
+    self.gamma = self.config['gamma']
+    self.polyak = self.config['polyak']
+    q_learning_rate = self.config['q_learning_rate']
+    pi_learning_rate = self.config['pi_learning_rate']
 
     # 5 community cards x 53 (52 cards + "unknown") + 2 holecards x 52,
     # (1 position in this round + 1 folded + 1 pot investment total + 1 pot investment this round + 1 which player last raised) x 6
@@ -58,7 +59,7 @@ class Sac1AgentNP(BaseAgentLoadable):
       self.prev_state = None
       self.prev_action = None
 
-      if os.path.exists(self.config['checkpoint_path']):
+      if os.path.exists(self.config['root_path']):
         self.load_checkpoint()
 
   def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
@@ -98,7 +99,7 @@ class Sac1AgentNP(BaseAgentLoadable):
                               next_obs=state,
                               done=np.ones(self.BATCH_SIZE),
                               batch_size=self.BATCH_SIZE)
-      self.logger.store(Reward=scaled_gains)
+      # self.logger.store(Reward=scaled_gains)
       self.train()
       self.save_checkpoint()
       # FIXME: Remember that replaybuffer is *not* emptied here
@@ -111,20 +112,20 @@ class Sac1AgentNP(BaseAgentLoadable):
       self.update_parameters(batch)
       batch = self.replaybuffer.sample_batch(batch_size=min(self.REPLAY_BATCH_SIZE, self.BATCH_SIZE))
 
-    self.log_everything()
+    # self.log_everything()
 
-  def log_everything(self):
-    self.logger.log_tabular('QContribPiLoss', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('LossPi', average_only=True)
-    self.logger.log_tabular('EntropyBonus', average_only=True)
-    self.logger.log_tabular('Raises', average_only=True)
-    self.logger.log_tabular('Calls', average_only=True)
-    self.logger.log_tabular('Folds', average_only=True)
-    self.logger.log_tabular('QVals', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('TargQVals', with_min_and_max=True, average_only=True)
-    self.logger.log_tabular('Reward', average_only=True)
-    self.logger.log_tabular('LossQ', average_only=True)
-    self.logger.dump_tabular()
+  # def log_everything(self):
+  #   self.logger.log_tabular('QContribPiLoss', with_min_and_max=True, average_only=True)
+  #   self.logger.log_tabular('LossPi', average_only=True)
+  #   self.logger.log_tabular('EntropyBonus', average_only=True)
+  #   self.logger.log_tabular('Raises', average_only=True)
+  #   self.logger.log_tabular('Calls', average_only=True)
+  #   self.logger.log_tabular('Folds', average_only=True)
+  #   self.logger.log_tabular('QVals', with_min_and_max=True, average_only=True)
+  #   self.logger.log_tabular('TargQVals', with_min_and_max=True, average_only=True)
+  #   self.logger.log_tabular('Reward', average_only=True)
+  #   self.logger.log_tabular('LossQ', average_only=True)
+  #   self.logger.dump_tabular()
 
   def build_network_input(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                           hole_cards, community_cards):
@@ -175,10 +176,10 @@ class Sac1AgentNP(BaseAgentLoadable):
     current_stake = current_bets + prev_round_investment
     amounts = np.clip((network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2, min_raise, self.INITAL_CAPITAL - current_stake)
 
-    self.logger.store(Raises=100*np.mean(actions == constants.RAISE),
-                      Calls=100*np.mean(actions == constants.CALL),
-                      Folds=100*np.mean(actions == constants.FOLD),
-                      )
+    # self.logger.store(Raises=100*np.mean(actions == constants.RAISE),
+    #                   Calls=100*np.mean(actions == constants.CALL),
+    #                   Folds=100*np.mean(actions == constants.FOLD),
+    #                   )
 
     return actions, amounts
 
@@ -198,7 +199,7 @@ class Sac1AgentNP(BaseAgentLoadable):
       q1_pi_targ = self.target_ac.q1(o2, a2)
       q2_pi_targ = self.target_ac.q2(o2, a2)
       q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-      self.logger.store(EntropyBonus=(-self.alpha * logp_a2).cpu().detach().numpy())
+      # self.logger.store(EntropyBonus=(-self.alpha * logp_a2).cpu().detach().numpy())
       backup = r + self.gamma * (1 - d) * (q_pi_targ - self.alpha * logp_a2)
 
     # MSE loss against Bellman backup
@@ -207,7 +208,8 @@ class Sac1AgentNP(BaseAgentLoadable):
     loss_q = loss_q1 + loss_q2
 
     # Useful info for logging
-    q_info = dict(QVals=((q1+q2)/2).cpu().detach().numpy(), TargQVals=((q1_pi_targ+q2_pi_targ)/2).cpu().detach().numpy())
+    # q_info = dict(QVals=((q1+q2)/2).cpu().detach().numpy(), TargQVals=((q1_pi_targ+q2_pi_targ)/2).cpu().detach().numpy())
+    q_info = {}
 
     return loss_q, q_info
 
@@ -221,10 +223,11 @@ class Sac1AgentNP(BaseAgentLoadable):
 
     # Entropy-regularized policy loss
     loss_pi = (self.alpha * logp_pi - q_pi).mean()
-    self.logger.store(QContribPiLoss=(torch.abs(q_pi) / (torch.abs(q_pi) + torch.abs(self.alpha * logp_pi))).mean().cpu().detach().numpy())
+    # self.logger.store(QContribPiLoss=(torch.abs(q_pi) / (torch.abs(q_pi) + torch.abs(self.alpha * logp_pi))).mean().cpu().detach().numpy())
 
     # Useful info for logging
-    pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
+    # pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
+    pi_info = {}
 
     return loss_pi, pi_info
 
@@ -236,7 +239,7 @@ class Sac1AgentNP(BaseAgentLoadable):
     self.q_optimizer.step()
 
     # Record things
-    self.logger.store(LossQ=loss_q.item(), **q_info)
+    # self.logger.store(LossQ=loss_q.item(), **q_info)
 
     # Freeze Q-networks so you don't waste computational effort
     # computing gradients for them during the policy learning step.
@@ -254,7 +257,7 @@ class Sac1AgentNP(BaseAgentLoadable):
       p.requires_grad = True
 
     # Record things
-    self.logger.store(LossPi=loss_pi.item(), **pi_info)
+    # self.logger.store(LossPi=loss_pi.item(), **pi_info)
 
     # Finally, update target networks by polyak averaging.
     with torch.no_grad():
@@ -265,19 +268,21 @@ class Sac1AgentNP(BaseAgentLoadable):
         p_targ.data.add_((1 - self.polyak) * p.data)
 
   def save_checkpoint(self):
-    self.ac.save(self.config['checkpoint_path'])
-    torch.save(self.pi_optimizer.state_dict(), os.path.join(self.config['checkpoint_path'], 'pi_opt.optb'))
-    torch.save(self.q_optimizer.state_dict(), os.path.join(self.config['checkpoint_path'], 'q_opt.optb'))
+    path = os.path.join(self.config['root_path'], 'checkpoints')
+    self.ac.save(path)
+    torch.save(self.pi_optimizer.state_dict(), os.path.join(path, 'pi_opt.optb'))
+    torch.save(self.q_optimizer.state_dict(), os.path.join(path, 'q_opt.optb'))
 
   def load_checkpoint(self):
-    self.ac.load(self.config['checkpoint_path'])
-    self.pi_optimizer.load_state_dict(torch.load(os.path.join(self.config['checkpoint_path'], 'pi_opt.optb')))
-    self.q_optimizer.load_state_dict(torch.load(os.path.join(self.config['checkpoint_path'], 'q_opt.optb')))
+    path = os.path.join(self.config['root_path'], 'checkpoints')
+    self.ac.load(path)
+    self.pi_optimizer.load_state_dict(torch.load(os.path.join(path, 'pi_opt.optb')))
+    self.q_optimizer.load_state_dict(torch.load(os.path.join(path, 'q_opt.optb')))
 
   def spawn_clone(self):
-    root = os.path.join("sac1", "frozen-models")
+    root = os.path.join(self.config['root_path'], "frozen-models")
     os.makedirs(root, exist_ok=True)
-    new_agent_uuid = "Sac1-"+"".join(str(x) for x in np.random.randint(0, 9, 8).tolist())
+    new_agent_uuid = self.config['root_path'].capitalize()+"-"+"".join(str(x) for x in np.random.randint(0, 9, 8).tolist())
     path = os.path.join(root, new_agent_uuid)
     self.ac.save(path)
 

@@ -57,7 +57,7 @@ if __name__ == '__main__':
   BIG_BLIND = 2
   N_PLAYERS = 6
   PROBABILITY_ZERO_LEARNERS = 0.05
-  N_GAMES_UNTIL_CLONING = 100
+  N_GAMES_UNTIL_CLONING = 500
   LOGGER = GenericLogger()
 
   rating = Rating('./league/runner_ratings.json')
@@ -66,29 +66,27 @@ if __name__ == '__main__':
   # TODO: enable for persistency
   # rating.load_ratings()
 
-  clone_counter = N_GAMES_UNTIL_CLONING
+  round_counter = 0
 
   # gameloop
   while True:
     # TODO: configure as wanted here
-    n_learners = random.randrange(1, N_PLAYERS + 1)
-    # FIXME DEBUGTOOL
+    # More than 1 learner at a time overloads cuda, at least with sac1
     n_learners = 1
     if random.random() <= PROBABILITY_ZERO_LEARNERS:
       n_learners = 0
     n_teachers = N_PLAYERS - n_learners
 
     matchup = generate_matchup(all_agent_types, rating, n_learners, n_teachers)
-    print("\nMatchup:", " ".join(str(m) for m in matchup))
     total_winnings = game_engine.run_game(matchup)
     winnings = np.sum(total_winnings, axis=0).tolist()
-    print("Winnings:", " ".join(str(m) + ": " + str(w / BATCH_SIZE) for m, w in zip(matchup, winnings)))
+    print("Round {0}, Winnings: {1}".format(round_counter, " ".join(str(m) + ": " + str(w / BATCH_SIZE) for m, w in zip(matchup, winnings))))
     placings = [str(i[1]) for i in sorted(list(zip(winnings, matchup)), key=itemgetter(0), reverse=True)]
     rating.update_from_placings(placings)
     rating.save_ratings()
 
-    clone_counter -= 1
-    if clone_counter <= 0:
+    round_counter += 1
+    if round_counter % N_GAMES_UNTIL_CLONING == 0:
       print("Spawning new clones of all learners..")
       clone_counter = N_GAMES_UNTIL_CLONING
       available_matchup_infos = [(a_class, a_info) for a_class in all_agent_types for a_info in
