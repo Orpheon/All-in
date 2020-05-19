@@ -7,8 +7,8 @@ import seaborn as sns
 import numpy as np
 import pandas
 
-from pokereval.card import Card
-from pokereval.hand_evaluator import HandEvaluator
+# from pokereval.card import Card
+# from pokereval.hand_evaluator import HandEvaluator
 
 from os import listdir
 from os.path import isfile, join
@@ -72,7 +72,7 @@ class LogfileCollector:
       data = self.load_logfile(file_path)
       for event in data:
         event_code = event[0]
-        print(type(event_code))
+        # print(type(event_code))
         if event_code == constants.EV_END_GAME:
           self._handle_event_ev_end_game(event[1:])
 
@@ -92,7 +92,7 @@ class LogfileCollector:
     for i, nsp in enumerate(no_receivers):
       if nsp[0] == 0:
         zero_games.append(i)
-        print(i, winnings[i], card_values[i])
+        # print(i, winnings[i], card_values[i])
 
     clean_receivers = np.delete(receivers, zero_games, axis=NP_VERTICAL)
     clean_winnings = np.delete(winnings, zero_games, axis=NP_VERTICAL)
@@ -137,7 +137,7 @@ def cardval_from_str(hole):
 if __name__ == '__main__':
 
   logfile_collector = LogfileCollector()
-  logfile_collector.load_n_most_recent_logfiles(1)
+  logfile_collector.load_n_most_recent_logfiles(1000000)
 
   game_winnings = logfile_collector.game_winnings
 
