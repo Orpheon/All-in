@@ -73,7 +73,7 @@ class PypokerAgentAdapter(BasePokerPlayer):
     batch_size = 1
     initial_capital = 200
     n_players = 6
-    self._agentNP.start_game(batch_size, initial_capital, n_players)
+    self._agentNP.initialize(batch_size, initial_capital, n_players)
 
   def receive_round_start_message(self, round_count: int, hole_card: List[str],
                                   seats: List[Dict[str, Union[str, int]]]) -> None:

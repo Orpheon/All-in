@@ -23,7 +23,7 @@ class Sac1AgentNP(BaseAgentLoadable):
 
   logger = EpochLogger(output_dir='sac1/logs', output_fname='progress.csv')
 
-  def start_game(self, batch_size, initial_capital, n_players, alpha=0.0005, gamma=1.0, polyak=0.995,
+  def initialize(self, batch_size, initial_capital, n_players, alpha=0.0005, gamma=1.0, polyak=0.995,
                  q_learning_rate=0.001, pi_learning_rate=0.1):
     self.BATCH_SIZE = batch_size
     self.REPLAY_BATCH_SIZE = 1000

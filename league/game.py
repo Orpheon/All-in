@@ -34,7 +34,7 @@ class GameEngine:
     prev_round_investment = np.zeros((self.BATCH_SIZE, len(players)), dtype=int)
 
     for player in players:
-      player.start_game(self.BATCH_SIZE, self.INITIAL_CAPITAL, self.N_PLAYERS)
+      player.initialize(self.BATCH_SIZE, self.INITIAL_CAPITAL, self.N_PLAYERS)
 
     # Pre-flop
     bets, _ = self.run_round(players, prev_round_investment, folded, constants.PRE_FLOP, hole_cards, community_cards[:, :0])

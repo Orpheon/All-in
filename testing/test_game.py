@@ -69,7 +69,7 @@ class MockPlayer(BasePokerPlayer):
     #print(p_idx_action, p_idx_amount, player_idx)
     return actions, amounts
 
-  def start_game(self, batch_size, initial_capital, n_players):
+  def initialize(self, batch_size, initial_capital, n_players):
     pass
 
   def round_end(self, player_idx, round, current_bets, min_raise, prev_round_investment, hole_cards, community_cards):
