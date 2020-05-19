@@ -58,7 +58,7 @@ class Rating:
       #              y=mu[mask],
       #              yerr=sigma_2[mask],
       #              linestyle='-')
-      plt.ylim(87, 125)
+      # plt.ylim(87, 125)
     plt.legend(self._ratings['all_agents'])
     plt.show()
 

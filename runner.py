@@ -5,6 +5,8 @@ import numpy as np
 
 from agent.random.randomAgentNP import RandomAgentNP
 from agent.sac1.sac1AgentNP import Sac1AgentNP
+from agent.sac2.sac2AgentNP import Sac2AgentNP
+from agent.qlearn1.qlearn1AgentNP import Qlearn1AgentNP
 from agent.call.callAgentNP import CallAgentNP
 
 from league.rating import Rating

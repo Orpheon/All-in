@@ -1,17 +1,16 @@
 {
   "agent_ids": {
-    "Sac1-mutater": {
+    "Sac2-mutater": {
       "matchup_info": {
         "type": "learner"
       },
       "setup": {
-        "alpha": 0.0005,
+        "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
         "pi_learning_rate": 0.1,
-        "polyak": 0.999,
         "q_learning_rate": 0.001,
-        "root_path": "sac1",
+        "root_path": "sac2",
         "trainable": true
       }
     }
