@@ -7,9 +7,6 @@ import seaborn as sns
 import numpy as np
 import pandas
 
-# from pokereval.card import Card
-# from pokereval.hand_evaluator import HandEvaluator
-
 from os import listdir
 from os.path import isfile, join
 
@@ -30,6 +27,9 @@ class LogfileCollector:
   cashflows = []
   folding_losses = []
 
+  def __init__(self, output_folder):
+    self.output_folder = output_folder
+
   def plot_game_winnings(self):
     players = set()
     for game_winning in self.game_winnings:
@@ -43,10 +43,11 @@ class LogfileCollector:
     plt.title('game winnings')
     plt.xlabel('game index')
     plt.ylabel('winning')
-    plt.show()
+    plt.savefig('{}game_winnings'.format(self.output_folder))
+    plt.close()
 
   def plot_cashflow(self):
-    for idx, game in reversed(enumerate(self.cashflows)):
+    for idx, game in enumerate(self.cashflows):
       cashflow_list = []
       for spender_idx in range(6):
         for receiver_idx in range(6):
@@ -63,7 +64,8 @@ class LogfileCollector:
       sns.heatmap(cashflow_pivot, annot=True, fmt=".3f", linewidths=.5, ax=ax, cmap='Blues')
       plt.tight_layout()
       plt.title('game {}/{}'.format(idx+1, len(self.cashflows)))
-      plt.show()
+      plt.savefig('{}cashflow_{}-{}'.format(self.output_folder,idx+1, len(self.cashflows)))
+      plt.close()
 
   def plot_fold_loss(self):
     players = set()
@@ -78,7 +80,8 @@ class LogfileCollector:
     plt.title('folding losses')
     plt.xlabel('game index')
     plt.ylabel('loss')
-    plt.show()
+    plt.savefig('{}folding_losses'.format(self.output_folder))
+    plt.close()
 
   def load_n_most_recent_logfiles(self, n):
     file_names = [self.root_path + fn for fn in listdir(self.root_path) if isfile(self.root_path + fn) and fn.endswith('bz2')]
@@ -140,8 +143,9 @@ class LogfileCollector:
 if __name__ == '__main__':
 
   RELEVANT_LOGFILES = 100
+  OUTPUT_FOLDER = 'plots/'
 
-  logfile_collector = LogfileCollector()
+  logfile_collector = LogfileCollector(OUTPUT_FOLDER)
   logfile_collector.load_n_most_recent_logfiles(RELEVANT_LOGFILES)
 
   game_winnings = logfile_collector.game_winnings
