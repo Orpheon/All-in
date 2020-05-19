@@ -45,7 +45,7 @@ class Rating:
       x_numbers = range(datapoints-len(y_ratings)+1, datapoints+1)
       plt.errorbar(x=x_numbers,
                    y=[r['mu'] for r in y_ratings],
-                   yerr=[r['sigma'] for r in y_ratings])
+                   yerr=[r['sigma'] * 2 for r in y_ratings])
     plt.legend(self._ratings['all_agents'])
     plt.show()
 
