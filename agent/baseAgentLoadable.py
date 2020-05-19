@@ -17,17 +17,28 @@ class BaseAgentLoadable(BaseAgentNP):
   def get_name(self):
     return str(self)
 
+  def spawn_clone(self):
+    pass
+
   @classmethod
   def available_agents(cls):
     with open(cls._config_file_path(), 'r') as f:
       config = json.loads(f.read())
-      return [(agent_id, agent_info['matchup_info']) for agent_id, agent_info in config['agent_ids'].items()]
+    return [(agent_id, agent_info['matchup_info']) for agent_id, agent_info in config['agent_ids'].items()]
 
   @classmethod
   def from_id(cls, agent_id):
     with open(cls._config_file_path(), 'r') as f:
-      config = json.loads(f.read())['agent_ids'][agent_id]['setup']
-      return cls(agent_id, config)
+      config = json.loads(f.read())
+    setup = config['agent_ids'][agent_id]['setup']
+    return cls(agent_id, setup)
+
+  @classmethod
+  def retire(cls, agent_id):
+    with open(cls._config_file_path(), 'rw') as f:
+      config = json.loads(f.read())
+      config['agent_ids'][agent_id]['setup']['type'] = 'retired'
+      f.write(json.dumps(config))
 
   @classmethod
   def _config_file_path(cls):

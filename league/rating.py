@@ -7,13 +7,16 @@ import seaborn as sns
 
 sns.set_style("whitegrid")
 
+TRUESKILL_START_MU = 100
+TRUESKILL_START_SIGMA = 30
+
 
 class Rating:
 
   def __init__(self, file_path):
     self._file_path = file_path
-    self._ratings = {'all_agents': set(), 'history': []}
-    self._trueskill = trueskill.TrueSkill(mu=100, sigma=30, )
+    self._ratings = {'all_agents': set(), 'history': [], 'latest': {}}
+    self._trueskill = trueskill.TrueSkill(mu=TRUESKILL_START_MU, sigma=TRUESKILL_START_SIGMA, )
 
     # TODO: configure trueskill environment parameters
 
@@ -28,6 +31,9 @@ class Rating:
       tmp = dict(self._ratings)
       tmp['all_agents'] = list(tmp['all_agents'])
       f.write(json.dumps(tmp))
+
+  def get_rating_from_id(self, id):
+    return self._ratings['latest'].get(id, {'mu': TRUESKILL_START_MU, 'sigma': TRUESKILL_START_SIGMA})
 
   def plot_history(self):
     datapoints = len(self._ratings['history'])
@@ -66,6 +72,7 @@ class Rating:
 
     for agent_id, rating in update_values.items():
       self._ratings['all_agents'].add(agent_id)
+      self._ratings['latest'][agent_id] = {'mu': rating.mu, 'sigma': rating.sigma}
       update_map[agent_id] = {'mu': rating.mu, 'sigma': rating.sigma}
     self._ratings['history'].append(update_map)
 

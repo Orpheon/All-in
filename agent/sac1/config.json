@@ -1,7 +1,9 @@
 {
   "agent_ids": {
     "mutater": {
-      "matchup_info": {},
+      "matchup_info": {
+        "type": "learner"
+      },
       "setup": {
         "trainable": true,
         "checkpoint_path": "sac1/checkpoints",
