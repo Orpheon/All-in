@@ -16,13 +16,19 @@ from league.logger import GenericLogger
 
 def pick_with_probability(n, elems, probs):
   picks = []
+  assert(n <= len(elems))
   for _ in range(n):
+    assert (len(elems) == len(probs))
     total_prob = sum(probs)
-    stacked_probs = []
+    cumulative_probs = []
     for p in probs:
-      stacked_probs.append(p / total_prob + sum(stacked_probs[-1:]))
+      cumulative_probs.append(p / total_prob + sum(cumulative_probs[-1:]))
+    assert(len(cumulative_probs) == len(elems))
     r = random.random()
-    idx = sum([i < r for i in stacked_probs])
+    for i,p in enumerate(cumulative_probs):
+      if p >= r:
+        idx = i
+        break
     picks.append(elems[idx])
     del elems[idx]
     del probs[idx]
