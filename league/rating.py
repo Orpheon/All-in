@@ -44,7 +44,13 @@ class Rating:
     sigma_2 = np.ndarray((len(self._ratings['history']),))
     x = np.arange(len(self._ratings['history']))
 
+    agent_types = list(set(agent[:agent.index("-")] for agent in self._ratings['all_agents']))
+    palette = sns.color_palette("husl", n_colors=len(agent_types))
+
     for agent in self._ratings['all_agents']:
+      for idx,type in enumerate(agent_types):
+        if type in agent:
+          color = palette[idx]
       for idx,game in enumerate(self._ratings['history']):
         if agent in game:
           mu[idx] = game[agent]['mu']
@@ -53,13 +59,15 @@ class Rating:
           mu[idx] = np.NaN
           sigma_2[idx] = np.NaN
       mask = np.isfinite(mu)
-      sns.lineplot(x=x[mask], y=mu[mask])
+      sns.lineplot(x=x[mask], y=mu[mask], style="mutater" in agent, dashes={False: [], True: [2, 2]}, color=color)
       # plt.errorbar(x=x[mask],
       #              y=mu[mask],
       #              yerr=sigma_2[mask],
       #              linestyle='-')
       # plt.ylim(87, 125)
-    plt.legend(self._ratings['all_agents'])
+
+    fake_lines = [plt.Line2D([0], [0], color=color) for color in palette]
+    plt.legend(fake_lines, agent_types)
     plt.show()
 
   def update_from_placings(self, agents_placing):
