@@ -7,6 +7,8 @@ from agent.random.randomAgentNP import RandomAgentNP
 from agent.sac1.sac1AgentNP import Sac1AgentNP
 from agent.sac2.sac2AgentNP import Sac2AgentNP
 from agent.qlearn1.qlearn1AgentNP import Qlearn1AgentNP
+from agent.qlearn2.qlearn2AgentNP import Qlearn2AgentNP
+from agent.qlearn3.qlearn3AgentNP import Qlearn3AgentNP
 from agent.call.callAgentNP import CallAgentNP
 
 from league.rating import Rating
@@ -57,7 +59,8 @@ def generate_matchup(all_agent_types, rating, n_learners, n_teachers):
 
 
 if __name__ == '__main__':
-  all_agent_types = [RandomAgentNP, Sac1AgentNP, CallAgentNP]
+  all_agent_types = [Qlearn1AgentNP, Qlearn2AgentNP, Qlearn3AgentNP, CallAgentNP]
+  # all_agent_types = [RandomAgentNP, Sac1AgentNP, Sac2AgentNP, Qlearn1AgentNP, CallAgentNP, Qlearn2AgentNP]
 
   BATCH_SIZE = 10000
   INITIAL_CAPITAL = 200
@@ -65,7 +68,7 @@ if __name__ == '__main__':
   BIG_BLIND = 2
   N_PLAYERS = 6
   PROBABILITY_ZERO_LEARNERS = 0.05
-  N_GAMES_UNTIL_CLONING = 500
+  N_GAMES_UNTIL_CLONING = 200
   LOGGER = GenericLogger()
 
   rating = Rating('./league/runner_ratings.json')
