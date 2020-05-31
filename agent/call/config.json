@@ -29,6 +29,12 @@
         "type": "teacher"
       },
       "setup": {}
+    },
+    "CallAgent-6.0": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {}
     }
   }
 }

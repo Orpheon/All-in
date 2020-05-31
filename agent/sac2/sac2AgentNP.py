@@ -18,7 +18,7 @@ class Sac2AgentNP(BaseAgentLoadable):
   def _config_file_path(cls):
     return './agent/sac2/config.json'
 
-  # logger = EpochLogger(output_dir='sac2/logs', output_fname='progress.csv')
+  logger = EpochLogger(output_dir='sac2/logs', output_fname='progress.csv')
 
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
@@ -75,8 +75,11 @@ class Sac2AgentNP(BaseAgentLoadable):
       self.prev_state = state
       self.prev_action = network_output
 
-    actions, amounts = self.interpret_network_output(network_output, current_bets[:, player_idx],
-                                                     prev_round_investment[:, player_idx], min_raise)
+    actions, amounts = self.interpret_network_output(network_output,
+                                                     current_bets,
+                                                     prev_round_investment,
+                                                     player_idx,
+                                                     min_raise)
 
     return actions, amounts
 
@@ -86,12 +89,16 @@ class Sac2AgentNP(BaseAgentLoadable):
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
       scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS/2 - 1)) * 2 / self.N_PLAYERS
+      # DEBUGTOOL
+      lost_money = (gains / self.INITAL_CAPITAL)
+      lost_money[folded[:, player_idx] == 0] = 0
+
       self.reward = torch.Tensor(scaled_gains).to(self.config['device'])
       self.replaybuffer.store(obs=self.prev_state,
                               act=self.prev_action,
                               next_obs=state,
                               indices=np.arange(self.BATCH_SIZE))
-      self.logger.store(Reward=scaled_gains)
+      self.logger.store(Reward=scaled_gains, LostInFolding=lost_money, LostGeneral=(gains / self.INITAL_CAPITAL))
       self.train()
       self.save_checkpoint()
       # FIXME: Remember that replaybuffer is *not* emptied here
@@ -113,6 +120,8 @@ class Sac2AgentNP(BaseAgentLoadable):
     self.logger.log_tabular('Raises', average_only=True)
     self.logger.log_tabular('Calls', average_only=True)
     self.logger.log_tabular('Folds', average_only=True)
+    self.logger.log_tabular('LostInFolding', with_min_and_max=True, average_only=True)
+    self.logger.log_tabular('LostGeneral', with_min_and_max=True, average_only=True)
     self.logger.log_tabular('QVals', with_min_and_max=True, average_only=True)
     self.logger.log_tabular('Reward', average_only=True)
     self.logger.log_tabular('LossQ', average_only=True)
@@ -159,12 +168,14 @@ class Sac2AgentNP(BaseAgentLoadable):
 
     return network_input
 
-  def interpret_network_output(self, network_output, current_bets, prev_round_investment, min_raise):
+  def interpret_network_output(self, network_output, current_bets, prev_round_investment, player_idx, min_raise):
 
     chosen_action = np.argmax(network_output[:, :3], axis=1)
     actions = np.array([constants.FOLD, constants.CALL, constants.RAISE])[chosen_action]
 
-    current_stake = current_bets + prev_round_investment
+    actions[current_bets.sum(axis=1) == 0] = constants.CALL
+
+    current_stake = current_bets[:, player_idx] + prev_round_investment[:, player_idx]
     amounts = np.clip((network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2, min_raise, self.INITAL_CAPITAL - current_stake)
 
     self.logger.store(Raises=100*np.mean(actions == constants.RAISE),

@@ -45,7 +45,7 @@ class Qlearn1AgentNP(BaseAgentLoadable):
       self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim,
                                                     act_dim=self.act_dim,
                                                     batch_size=self.BATCH_SIZE,
-                                                    size=50,
+                                                    size=40,
                                                     device=self.config['device'])
 
       self.q_optimizer = torch.optim.Adam(self.q.parameters(), lr=q_learning_rate)
@@ -63,7 +63,8 @@ class Qlearn1AgentNP(BaseAgentLoadable):
                                      last_raiser, hole_cards, community_cards)
 
     actions, amounts, actions_serialized = self.choose_action(
-      torch.as_tensor(state, dtype=torch.float32, device=self.config['device'])
+      torch.as_tensor(state, dtype=torch.float32, device=self.config['device']),
+      current_bets
     )
 
     if self.config['trainable']:
@@ -84,12 +85,17 @@ class Qlearn1AgentNP(BaseAgentLoadable):
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
       scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS/2 - 1)) * 2 / self.N_PLAYERS
+
+      # DEBUGTOOL
+      lost_money = (gains / self.INITAL_CAPITAL)
+      lost_money[folded[:, player_idx] == 0] = 0
+
       self.reward = torch.Tensor(scaled_gains).to(self.config['device'])
       self.replaybuffer.store(obs=self.prev_state,
                               act=self.prev_action,
                               next_obs=state,
                               active_games=np.ones(self.BATCH_SIZE))
-      self.logger.store(Reward=scaled_gains)
+      self.logger.store(Reward=scaled_gains, LostInFolding=lost_money, LostGeneral=(gains / self.INITAL_CAPITAL))
       self.train()
       self.save_checkpoint()
       # FIXME: Remember that replaybuffer is *not* emptied here
@@ -108,6 +114,8 @@ class Qlearn1AgentNP(BaseAgentLoadable):
     self.logger.log_tabular('Calls', average_only=True)
     for i in range(2, self.act_dim):
       self.logger.log_tabular('Raises '+str(self.possible_raises[i]), average_only=True)
+    self.logger.log_tabular('LostInFolding', with_min_and_max=True, average_only=True)
+    self.logger.log_tabular('LostGeneral', with_min_and_max=True, average_only=True)
     self.logger.log_tabular('QVals', with_min_and_max=True, average_only=True)
     self.logger.log_tabular('Reward', average_only=True)
     self.logger.log_tabular('LossQ', average_only=True)
@@ -154,14 +162,13 @@ class Qlearn1AgentNP(BaseAgentLoadable):
 
     return network_input
 
-  def choose_action(self, network_input):
-
+  def choose_action(self, network_input, current_bets):
     scores = np.ndarray((self.BATCH_SIZE, self.act_dim))
     with torch.no_grad():
       for idx in range(self.possible_actions.shape[1]):
         scores[:, idx] = self.q(network_input, self.possible_actions[:, idx, :]).cpu().numpy()
 
-        actions = np.argmax(scores, axis=1)
+      actions = np.argmax(scores, axis=1)
 
     if self.config['trainable']:
       dice = np.random.random(self.BATCH_SIZE)
@@ -172,6 +179,8 @@ class Qlearn1AgentNP(BaseAgentLoadable):
     amounts = self.possible_raises[actions]
 
     actions[actions > constants.RAISE] = constants.RAISE
+
+    actions[current_bets.sum(axis=1) == 0] = constants.CALL
 
     self.logger.store(Calls=100*np.mean(actions == constants.CALL),
                       Folds=100*np.mean(actions == constants.FOLD))
