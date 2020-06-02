@@ -110,5 +110,8 @@ class MLPActorCritic(nn.Module):
       self.pi.train()
       self.q1.train()
       self.q2.train()
+      self.q1.to(self.device)
+      self.q2.to(self.device)
     else:
       self.pi.eval()
+    self.pi.to(self.device)

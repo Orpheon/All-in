@@ -56,6 +56,8 @@ class Qlearn1AgentNP(BaseAgentLoadable):
 
       if os.path.exists(os.path.join(self.config['root_path'], "checkpoints")):
         self.load_checkpoint()
+    else:
+      self.q.load(self.config['model_path'])
 
   def act(self, player_idx, round, active_games, current_bets, min_raise, prev_round_investment, folded, last_raiser,
           hole_cards, community_cards):

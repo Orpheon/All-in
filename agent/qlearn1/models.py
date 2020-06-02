@@ -26,6 +26,8 @@ class MLPQFunction(nn.Module):
                device="cpu"):
     super().__init__()
 
+    self.device = device
+
     self.q = mlp([obs_dim + act_dim] + list(hidden_sizes) + [1], activation, output_activation=nn.Tanh)
     self.q.to(device)
     self.trainable = trainable
@@ -48,3 +50,4 @@ class MLPQFunction(nn.Module):
       self.q.train()
     else:
       self.q.eval()
+    self.q.to(self.device)

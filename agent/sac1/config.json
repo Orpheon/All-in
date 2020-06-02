@@ -1,37 +1,5 @@
 {
   "agent_ids": {
-    "Sac1-04353377": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.0005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac1/frozen-models/Sac1-04353377",
-        "pi_learning_rate": 0.1,
-        "polyak": 0.999,
-        "q_learning_rate": 0.001,
-        "root_path": "sac1",
-        "trainable": false
-      }
-    },
-    "Sac1-10246136": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.0005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac1/frozen-models/Sac1-10246136",
-        "pi_learning_rate": 0.1,
-        "polyak": 0.999,
-        "q_learning_rate": 0.001,
-        "root_path": "sac1",
-        "trainable": false
-      }
-    },
     "Sac1-mutater": {
       "matchup_info": {
         "type": "learner"
