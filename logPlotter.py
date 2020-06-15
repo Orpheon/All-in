@@ -21,11 +21,11 @@ NP_HORIZONTAL = 1
 
 
 class LogfileCollector:
-
   root_path = './gamelogs/'
   game_winnings = []
   cashflows = []
   folding_losses = []
+  winrate_per_hole_hand = {}
 
   def __init__(self, output_folder):
     self.output_folder = output_folder
@@ -63,8 +63,8 @@ class LogfileCollector:
       f, ax = plt.subplots(figsize=(9, 6))
       sns.heatmap(cashflow_pivot, annot=True, fmt=".3f", linewidths=.5, ax=ax, cmap='Blues')
       plt.tight_layout()
-      plt.title('game {}/{}'.format(idx+1, len(self.cashflows)))
-      plt.savefig('{}cashflow_{}-{}'.format(self.output_folder,idx+1, len(self.cashflows)))
+      plt.title('game {}/{}'.format(idx + 1, len(self.cashflows)))
+      plt.savefig('{}cashflow_{}-{}'.format(self.output_folder, idx + 1, len(self.cashflows)))
       plt.close()
 
   def plot_fold_loss(self):
@@ -84,11 +84,13 @@ class LogfileCollector:
     plt.close()
 
   def load_n_most_recent_logfiles(self, n):
-    file_names = [self.root_path + fn for fn in listdir(self.root_path) if isfile(self.root_path + fn) and fn.endswith('bz2')]
+    file_names = [self.root_path + fn for fn in listdir(self.root_path) if
+                  isfile(self.root_path + fn) and fn.endswith('bz2')]
     to_load = sorted(file_names)[-n:]
     print('{}/{} logfiles added to list'.format(n, len(file_names)))
 
-    for file_path in to_load:
+    for idx, file_path in enumerate(to_load):
+      print('loaded:', idx)
       data = self.load_logfile(file_path)
       for event in data:
         event_code = event[0]
@@ -101,14 +103,40 @@ class LogfileCollector:
     winnings = data[1]
     players = data[2]
     folded = data[3]
+    hole_hands = data[4]
+    n_games, n_players = winnings.shape
 
-    n_games = winnings.shape[0]
+    winrate_per_hole_hand = {}
+    n, m = winnings.shape
+    for n_idx in range(n_games):
+      for m_idx in range(n_players):
+        hand = tuple(sorted(hole_hands[n_idx][m_idx]))
+        if hand not in winrate_per_hole_hand.keys():
+          if winnings[n_idx][m_idx] > 0:
+            winrate_per_hole_hand[hand] = [1, 0]
+          if winnings[n_idx][m_idx] < 0:
+            winrate_per_hole_hand[hand] = [0, 1]
+        else:
+          if winnings[n_idx][m_idx] > 0:
+            winrate_per_hole_hand[hand][0] += 1
+          if winnings[n_idx][m_idx] < 0:
+            winrate_per_hole_hand[hand][1] += 1
 
-    #winnings
+    for k, v in winrate_per_hole_hand.items():
+      if k not in self.winrate_per_hole_hand.keys():
+        self.winrate_per_hole_hand[k] = v
+      else:
+        self.winrate_per_hole_hand[k][0] += v[0]
+        self.winrate_per_hole_hand[k][1] += v[1]
+
+    #TODO: remove
+    return
+
+    # winnings
     winnings_sum = np.sum(winnings, NP_VERTICAL) / n_games
     self.game_winnings.append({p: w for p, w in zip(players, winnings_sum)})
 
-    #cashflow
+    # cashflow
     receivers = winnings > 0
     spenders = winnings < 0
 
@@ -134,14 +162,13 @@ class LogfileCollector:
     folding_loss = np.sum(winnings * folded, NP_VERTICAL) / n_games
     self.folding_losses.append({p: fl for p, fl in zip(players, folding_loss)})
 
-
   def load_logfile(self, file_path):
     with bz2.BZ2File(file_path, 'r') as f:
       data = pickle.load(f)
     return data
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
   RELEVANT_LOGFILES = 100
   OUTPUT_FOLDER = 'plots/'
 
