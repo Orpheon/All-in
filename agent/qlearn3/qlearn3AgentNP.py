@@ -30,15 +30,12 @@ class Qlearn3AgentNP(BaseAgentLoadable):
     # (1 position in this round + 1 folded + 1 pot investment total + 1 pot investment this round + 1 which player last raised) x 6
     # round x 4 (1h)
     self.obs_dim = (5) * 53 + (2) * 52 + (1 + 1 + 1 + 1 + 1) * 6 + (1) * 5
-    self.act_dim = 7
+    self.act_dim = 5
 
     self.q = models.MLPQFunction(self.obs_dim, self.act_dim, trainable=self.config['trainable'], device=self.config['device'])
 
-    self.possible_actions = torch.zeros((self.BATCH_SIZE, 2, self.act_dim), device=self.config['device'])
-    self.possible_actions[:, 0, constants.FOLD] = 1
-    self.possible_actions[:, 1, constants.CALL] = 1
-    self.possible_actions[:, 2:, constants.RAISE] = 1
-    self.possible_raises = np.array([0, 0, 4, 10, 20, 100, 200])
+    self.possible_actions = torch.zeros((self.BATCH_SIZE, self.act_dim), device=self.config['device'])
+    self.possible_raises = np.array([0, 0, 4, 20, 200])
 
     if self.config['trainable']:
       self.reward = torch.zeros(self.BATCH_SIZE)
@@ -170,7 +167,10 @@ class Qlearn3AgentNP(BaseAgentLoadable):
     with torch.no_grad():
       scores[:, 0] = investment_normalized
       for idx in range(1, self.possible_actions.shape[1]):
-        scores[:, idx] = self.q(network_input, self.possible_actions[:, idx, :]).cpu().numpy()
+        onehot_actions = torch.eye(self.act_dim, device=self.config['device'])[
+          torch.full((self.BATCH_SIZE,), idx, dtype=torch.long, device=self.config['device'])
+        ]
+        scores[:, idx] = self.q(network_input, onehot_actions).cpu().numpy()
 
       actions = np.argmax(scores, axis=1)
 

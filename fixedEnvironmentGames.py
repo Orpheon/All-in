@@ -164,7 +164,7 @@ def plot_hand_strength_bet_distribution(agentActionLogger: AgentActionLogger):
 
 if __name__ == '__main__':
   # config
-  N_TESTCASES = 17_800
+  N_TESTCASES = 10000
   INITIAL_CAPITAL = 200
   SMALL_BLIND = 1
   BIG_BLIND = 2

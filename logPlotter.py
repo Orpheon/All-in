@@ -106,31 +106,31 @@ class LogfileCollector:
     hole_hands = data[4]
     n_games, n_players = winnings.shape
 
-    winrate_per_hole_hand = {}
-    n, m = winnings.shape
-    for n_idx in range(n_games):
-      for m_idx in range(n_players):
-        hand = tuple(sorted(hole_hands[n_idx][m_idx]))
-        if hand not in winrate_per_hole_hand.keys():
-          if winnings[n_idx][m_idx] > 0:
-            winrate_per_hole_hand[hand] = [1, 0]
-          if winnings[n_idx][m_idx] < 0:
-            winrate_per_hole_hand[hand] = [0, 1]
-        else:
-          if winnings[n_idx][m_idx] > 0:
-            winrate_per_hole_hand[hand][0] += 1
-          if winnings[n_idx][m_idx] < 0:
-            winrate_per_hole_hand[hand][1] += 1
-
-    for k, v in winrate_per_hole_hand.items():
-      if k not in self.winrate_per_hole_hand.keys():
-        self.winrate_per_hole_hand[k] = v
-      else:
-        self.winrate_per_hole_hand[k][0] += v[0]
-        self.winrate_per_hole_hand[k][1] += v[1]
+    # winrate_per_hole_hand = {}
+    # n, m = winnings.shape
+    # for n_idx in range(n_games):
+    #   for m_idx in range(n_players):
+    #     hand = tuple(sorted(hole_hands[n_idx][m_idx]))
+    #     if hand not in winrate_per_hole_hand.keys():
+    #       if winnings[n_idx][m_idx] > 0:
+    #         winrate_per_hole_hand[hand] = [1, 0]
+    #       if winnings[n_idx][m_idx] < 0:
+    #         winrate_per_hole_hand[hand] = [0, 1]
+    #     else:
+    #       if winnings[n_idx][m_idx] > 0:
+    #         winrate_per_hole_hand[hand][0] += 1
+    #       if winnings[n_idx][m_idx] < 0:
+    #         winrate_per_hole_hand[hand][1] += 1
+    #
+    # for k, v in winrate_per_hole_hand.items():
+    #   if k not in self.winrate_per_hole_hand.keys():
+    #     self.winrate_per_hole_hand[k] = v
+    #   else:
+    #     self.winrate_per_hole_hand[k][0] += v[0]
+    #     self.winrate_per_hole_hand[k][1] += v[1]
 
     #TODO: remove
-    return
+    # return
 
     # winnings
     winnings_sum = np.sum(winnings, NP_VERTICAL) / n_games

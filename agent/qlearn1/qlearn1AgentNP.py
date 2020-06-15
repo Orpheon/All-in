@@ -34,7 +34,7 @@ class Qlearn1AgentNP(BaseAgentLoadable):
 
     self.q = models.MLPQFunction(self.obs_dim, self.act_dim, trainable=self.config['trainable'], device=self.config['device'])
 
-    self.possible_actions = torch.zeros((self.BATCH_SIZE, 3, self.act_dim), device=self.config['device'])
+    self.possible_actions = torch.zeros((self.BATCH_SIZE, self.act_dim, 3), device=self.config['device'])
     self.possible_actions[:, 0, constants.FOLD] = 1
     self.possible_actions[:, 1, constants.CALL] = 1
     self.possible_actions[:, 2:, constants.RAISE] = 1
@@ -168,7 +168,10 @@ class Qlearn1AgentNP(BaseAgentLoadable):
     scores = np.ndarray((self.BATCH_SIZE, self.act_dim))
     with torch.no_grad():
       for idx in range(self.possible_actions.shape[1]):
-        scores[:, idx] = self.q(network_input, self.possible_actions[:, idx, :]).cpu().numpy()
+        onehot_actions = torch.eye(self.act_dim, device=self.config['device'])[
+          torch.full((self.BATCH_SIZE,), idx, dtype=torch.long, device=self.config['device'])
+        ]
+        scores[:, idx] = self.q(network_input, onehot_actions).cpu().numpy()
 
       actions = np.argmax(scores, axis=1)
 
