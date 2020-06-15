@@ -1,7 +1,7 @@
-from agent.baseAgentLoadable import BaseAgent
+from agent.baseAgentLoadable import BaseAgentLoadable
 
 
-class AllNothingAgent(BaseAgent):
+class AllNothingAgent(BaseAgentLoadable):
 
   ev_table = {'AA': 2.32, 'KK': 1.67, 'QQ': 1.22, 'JJ': 0.86, 'AK s': 0.78, 'AQ s': 0.59, 'TT': 0.58, 'AK': 0.51,
               'AJ s': 0.44, 'KQ s': 0.39, '99': 0.38, 'AT s': 0.32, 'AQ': 0.31, 'KJ s': 0.29, '88': 0.25,
