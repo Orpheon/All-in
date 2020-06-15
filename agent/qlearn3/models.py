@@ -45,7 +45,7 @@ class MLPQFunction(nn.Module):
     torch.save(self.q.state_dict(), os.path.join(path, 'q.modelb'))
 
   def load(self, path):
-    self.q.load_state_dict(torch.load(os.path.join(path, 'q.modelb')))
+    self.q.load_state_dict(torch.load(os.path.join(path, 'q.modelb'), map_location=self.device))
     if self.trainable:
       self.q.train()
     else:

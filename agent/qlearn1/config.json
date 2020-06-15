@@ -1,5 +1,447 @@
 {
   "agent_ids": {
+    "Qlearn1-03646737": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-03646737",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-10500188": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-10500188",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-11125576": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-11125576",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-12262174": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-12262174",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-12331853": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-12331853",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-13502643": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-13502643",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-17032441": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-17032441",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-21734874": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-21734874",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-24542001": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-24542001",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-26414344": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-26414344",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-28822313": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-28822313",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-32401417": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-32401417",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-33746312": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-33746312",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-33861354": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-33861354",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-34455602": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-34455602",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-35216674": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-35216674",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-46082503": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-46082503",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-55305785": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-55305785",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-55584872": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-55584872",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-55610680": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-55610680",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-56505374": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-56505374",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-60703730": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-60703730",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-66161437": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-66161437",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-66888528": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-66888528",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-67440872": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-67440872",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-73788207": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-73788207",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-74126326": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-74126326",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-75470343": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-75470343",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-76628774": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-76628774",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-85246048": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-85246048",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-85687166": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-85687166",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-85757465": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-85757465",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-87013788": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-87013788",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
+    "Qlearn1-88222248": {
+      "matchup_info": {
+        "type": "teacher"
+      },
+      "setup": {
+        "device": "cuda",
+        "model_path": "qlearn1/frozen-models/Qlearn1-88222248",
+        "noise_level": 0.1,
+        "q_learning_rate": 0.001,
+        "root_path": "qlearn1",
+        "trainable": false
+      }
+    },
     "Qlearn1-mutater": {
       "matchup_info": {
         "type": "learner"

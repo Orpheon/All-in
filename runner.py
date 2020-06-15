@@ -59,8 +59,7 @@ def generate_matchup(all_agent_types, rating, n_learners, n_teachers):
 
 
 if __name__ == '__main__':
-  all_agent_types = [Qlearn1AgentNP, Qlearn2AgentNP, Qlearn3AgentNP, CallAgentNP]
-  # all_agent_types = [RandomAgentNP, Sac1AgentNP, Sac2AgentNP, Qlearn1AgentNP, CallAgentNP, Qlearn2AgentNP]
+  all_agent_types = [RandomAgentNP, Sac1AgentNP, Sac2AgentNP, Qlearn1AgentNP, CallAgentNP, Qlearn2AgentNP, Qlearn3AgentNP]
 
   BATCH_SIZE = 10000
   INITIAL_CAPITAL = 200
@@ -68,7 +67,7 @@ if __name__ == '__main__':
   BIG_BLIND = 2
   N_PLAYERS = 6
   PROBABILITY_ZERO_LEARNERS = 0.05
-  N_GAMES_UNTIL_CLONING = 200
+  N_GAMES_UNTIL_CLONING = (len(all_agent_types) - 2) * 100
   LOGGER = GenericLogger()
 
   rating = Rating('./league/runner_ratings.json')
