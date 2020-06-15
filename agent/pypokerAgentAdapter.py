@@ -23,11 +23,12 @@ class PypokerAgentAdapter(BasePokerPlayer):
     :return: action: str specifying action type. amount: int action argument.
     """
     round_str = round_state['street']
+    round = rounds_dict[round_str]
 
-    round = np.array([rounds_dict[round_str]])
+    active_rounds = np.array([True])
     min_raise = np.array([valid_actions[2]['amount']['min']])
     hole_cards = np.array([[treys.card.Card.new(hc) for hc in hole_card]])
-    community_cards = np.array([[treys.card.Card.new(hc) for hc in round_state['community_card']]])
+    community_cards = np.array([[treys.card.Card.new(hc) for hc in round_state['community_card']]], dtype=np.int32)
 
     player_idx_tmp = round_state['next_player']
     folded_tmp = [p['state'] == 'folded' for p in round_state['seats']]
@@ -36,7 +37,7 @@ class PypokerAgentAdapter(BasePokerPlayer):
     sb_idx = round_state['small_blind_pos']
 
     folded = np.array([folded_tmp[sb_idx:]+folded_tmp[:sb_idx]])
-    player_idx = np.array([(player_idx_tmp+sb_idx) % 6])
+    player_idx = (player_idx_tmp+sb_idx) % 6
     current_bets = np.array([current_bets_tmp[sb_idx:]+current_bets_tmp[:sb_idx]])
 
     seats = {p['uuid']: (idx+sb_idx) % 6 for idx, p in enumerate(round_state['seats'])}
@@ -59,8 +60,7 @@ class PypokerAgentAdapter(BasePokerPlayer):
         prev_round_investment_tmp[seats[uuid]] = stack
 
     prev_round_investment = np.array([prev_round_investment_tmp])
-
-    actionNP, amountNP = self._agentNP.act(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
+    actionNP, amountNP = self._agentNP.act(player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded,
                                            last_raiser, hole_cards, community_cards)
     return action_list[actionNP[0]], int(amountNP[0])
 
@@ -77,41 +77,19 @@ class PypokerAgentAdapter(BasePokerPlayer):
 
   def receive_round_start_message(self, round_count: int, hole_card: List[str],
                                   seats: List[Dict[str, Union[str, int]]]) -> None:
-    """
-    Called once a round starts.
-    :param round_count: Round number, in Cash Game always 1.
-    :param hole_card: Cards in possession of the player.
-    :param seats: Players at the table.
-    """
     pass
 
 
   def receive_street_start_message(self, street: str, round_state: Dict[str, Union[int, str, List, Dict]]) -> None:
-    """
-    Gets called at every stage (preflop, flop, turn, river, showdown).
-    :param street: Game stage
-    :param round_state: Dictionary containing the round state
-    """
     pass
 
 
   def receive_game_update_message(self, action: Dict[str, Union[str, int]],
                                   round_state: Dict[str, Union[int, str, List, Dict]]) -> None:
-    """
-    Gets called after every action made by any of the players.
-    :param action: Dict containing the player uuid and the executed action
-    :param round_state: Dictionary containing the round state
-    """
     pass
 
 
   def receive_round_result_message(self, winners: List[Dict[str, Union[int, str]]],
                                    hand_info: [List[Dict[str, Union[str, Dict]]]],
                                    round_state: Dict[str, Union[int, str, List, Dict]]) -> None:
-    """
-    Called at the end of the round.
-    :param winners: List of the round winners containing the stack and player information.
-    :param hand_info: List containing a Dict for every player at the table describing the players hand this round.
-    :param round_state: Dictionary containing the round state
-    """
     pass
