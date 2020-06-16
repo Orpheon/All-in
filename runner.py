@@ -37,7 +37,7 @@ def pick_with_probability(n, elems, probs):
   return picks
 
 
-def generate_matchup(all_agent_types, rating, n_learners, n_teachers, n_top_teachers):
+def generate_matchup(all_agent_types, rating, n_learners, n_teachers, p_only_top_teachers):
   available_matchup_infos = [(a_class, a_info) for a_class in all_agent_types for a_info in a_class.available_agents()]
 
   available_learners = [(a_class, a_info) for a_class, a_info in available_matchup_infos
@@ -52,11 +52,15 @@ def generate_matchup(all_agent_types, rating, n_learners, n_teachers, n_top_teac
   sorted_teachers = [(rating.get_rating_from_id(a_info[0])['mu'], a_class, a_info)
                      for a_class, a_info in available_teachers]
   sorted_teachers.sort(key=lambda x: x[0], reverse=True)
-  top_teachers = sorted_teachers[:n_top_teachers]
-  rest_teachers = sorted_teachers[n_top_teachers:]
+  top_teachers = sorted_teachers[:n_teachers]
+  rest_teachers = sorted_teachers[n_teachers:]
 
-  n_from_top = random.randrange(0, n_teachers)
-  n_from_rest = n_teachers - n_from_top
+  if random.random() < p_only_top_teachers:
+    n_from_top = n_teachers
+    n_from_rest = 0
+  else:
+    n_from_top = random.randrange(0, n_teachers)
+    n_from_rest = n_teachers - n_from_top
 
   picked_top_teachers = pick_with_probability(n_from_top, [(a_class, a_info) for _, a_class, a_info in top_teachers],
                                               [rating for rating, _, _ in top_teachers])
@@ -81,8 +85,8 @@ if __name__ == '__main__':
   SMALL_BLIND = 1
   BIG_BLIND = 2
   N_PLAYERS = 6
-  N_TOP_TEACHERS = 4
-  PROBABILITY_ZERO_LEARNERS = 0.05
+  P_ONLY_TOP_TEACHERS = 0.9
+  P_ZERO_LEARNERS = 0.02
   N_GAMES_UNTIL_CLONING = (len(ALL_AGENT_TYPES) - 2) * 100
   LOGGER = GenericLogger()
 
@@ -98,11 +102,11 @@ if __name__ == '__main__':
     # TODO: configure as wanted here
     # More than 1 learner at a time overloads cuda, at least with sac1
     n_learners = 1
-    if random.random() <= PROBABILITY_ZERO_LEARNERS:
+    if random.random() <= P_ZERO_LEARNERS:
       n_learners = 0
     n_teachers = N_PLAYERS - n_learners
 
-    matchup = generate_matchup(ALL_AGENT_TYPES, rating, n_learners, n_teachers, N_TOP_TEACHERS)
+    matchup = generate_matchup(ALL_AGENT_TYPES, rating, n_learners, n_teachers, P_ONLY_TOP_TEACHERS)
     total_winnings = game_engine.run_game(matchup)
     winnings = np.sum(total_winnings, axis=0).tolist()
     print("Round {0}, Winnings: {1}".format(round_counter, " ".join(
