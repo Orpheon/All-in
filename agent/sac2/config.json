@@ -1,6 +1,6 @@
 {
   "agent_ids": {
-    "Sac2-02852284": {
+    "Sac2-17076040": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -8,14 +8,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-02852284",
+        "model_path": "sac2/frozen-models/Sac2-17076040",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-05481881": {
+    "Sac2-21325271": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -23,14 +23,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-05481881",
+        "model_path": "sac2/frozen-models/Sac2-21325271",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-06517531": {
+    "Sac2-26466781": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -38,14 +38,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-06517531",
+        "model_path": "sac2/frozen-models/Sac2-26466781",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-10085442": {
+    "Sac2-26737306": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -53,14 +53,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-10085442",
+        "model_path": "sac2/frozen-models/Sac2-26737306",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-12243443": {
+    "Sac2-28516213": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -68,14 +68,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-12243443",
+        "model_path": "sac2/frozen-models/Sac2-28516213",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-13774018": {
+    "Sac2-30181002": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -83,14 +83,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-13774018",
+        "model_path": "sac2/frozen-models/Sac2-30181002",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-14817638": {
+    "Sac2-53638353": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -98,14 +98,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-14817638",
+        "model_path": "sac2/frozen-models/Sac2-53638353",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-22324654": {
+    "Sac2-60666775": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -113,14 +113,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-22324654",
+        "model_path": "sac2/frozen-models/Sac2-60666775",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-22538484": {
+    "Sac2-63581833": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -128,14 +128,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-22538484",
+        "model_path": "sac2/frozen-models/Sac2-63581833",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-32502042": {
+    "Sac2-72802474": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -143,14 +143,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-32502042",
+        "model_path": "sac2/frozen-models/Sac2-72802474",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-35445715": {
+    "Sac2-76256245": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -158,14 +158,14 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-35445715",
+        "model_path": "sac2/frozen-models/Sac2-76256245",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
         "trainable": false
       }
     },
-    "Sac2-35682760": {
+    "Sac2-82233464": {
       "matchup_info": {
         "type": "teacher"
       },
@@ -173,337 +173,7 @@
         "alpha": 0.005,
         "device": "cuda",
         "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-35682760",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-37035385": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-37035385",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-42522230": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-42522230",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-43145444": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-43145444",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-43154241": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-43154241",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-44310553": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-44310553",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-52068668": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-52068668",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-54334307": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-54334307",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-55428481": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-55428481",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-58132248": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-58132248",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-60007613": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-60007613",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-63307113": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-63307113",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-64274716": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-64274716",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-65015171": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-65015171",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-65178772": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-65178772",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-67775544": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-67775544",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-70587568": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-70587568",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-75513604": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-75513604",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-77526305": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-77526305",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-81300222": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-81300222",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-87065577": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-87065577",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-87270778": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-87270778",
-        "pi_learning_rate": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "sac2",
-        "trainable": false
-      }
-    },
-    "Sac2-88775536": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "alpha": 0.005,
-        "device": "cuda",
-        "gamma": 1.0,
-        "model_path": "sac2/frozen-models/Sac2-88775536",
+        "model_path": "sac2/frozen-models/Sac2-82233464",
         "pi_learning_rate": 0.1,
         "q_learning_rate": 0.001,
         "root_path": "sac2",
