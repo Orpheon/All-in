@@ -73,8 +73,7 @@ if __name__ == '__main__':
   rating = Rating('./league/runner_ratings.json')
   game_engine = GameEngine(BATCH_SIZE, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, LOGGER)
 
-  # TODO: enable for persistency
-  # rating.load_ratings()
+  rating.load_ratings()
 
   round_counter = 0
 

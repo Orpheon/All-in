@@ -70,6 +70,11 @@ class Rating:
     plt.legend(fake_lines, agent_types)
     plt.show()
 
+  def print_current_ratings(self):
+    ratings = [(v['mu'], v['sigma'], k) for k, v in self._ratings['latest'].items()]
+    output = "\n".join("{0}: {1} +/- {2}".format(agent, rating, 2*sd) for rating, sd, agent in sorted(ratings, reverse=True))
+    print(output)
+
   def update_from_placings(self, agents_placing):
     agents_ratings = {}
     for agent in agents_placing:
@@ -101,4 +106,5 @@ class Rating:
 if __name__ == '__main__':
   rating = Rating('runner_ratings.json')
   rating.load_ratings()
+  rating.print_current_ratings()
   rating.plot_history()
