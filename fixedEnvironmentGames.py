@@ -92,7 +92,6 @@ def plot_sns_heatmap(data_pivot, title, save_to_file):
 def plot_curves(x, ys, lbls, title, save_to_file):
   #TODO: remove prints
   for y, lbl in zip(ys, lbls):
-    print(lbl,':', y)
     plt.plot(x, y, label=lbl)
   plt.title(title)
   plt.xlabel('preflop handvalue (winchance)')
@@ -190,7 +189,6 @@ if __name__ == '__main__':
   for _ in range(N_RUNS):
     print('-' * 100)
     results = mock_game_engine.run_game(players)
-    print(results)
   print('-' * 100)
 
   plot_hand_strength_bet_distribution(agentActionLogger)
