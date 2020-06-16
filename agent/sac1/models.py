@@ -105,8 +105,8 @@ class MLPActorCritic(nn.Module):
   def load(self, path):
     self.pi.load_state_dict(torch.load(os.path.join(path, 'policy.modelb'), map_location=self.device))
     if self.trainable:
-      self.q1.load_state_dict(torch.load(os.path.join(path, 'q1.modelb')), map_location=self.device)
-      self.q2.load_state_dict(torch.load(os.path.join(path, 'q2.modelb')), map_location=self.device)
+      self.q1.load_state_dict(torch.load(os.path.join(path, 'q1.modelb'), map_location=self.device))
+      self.q2.load_state_dict(torch.load(os.path.join(path, 'q2.modelb'), map_location=self.device))
       self.pi.train()
       self.q1.train()
       self.q2.train()
