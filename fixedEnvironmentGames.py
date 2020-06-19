@@ -8,6 +8,7 @@ from agent.call.callAgentNP import CallAgentNP
 from agent.fold.foldAgentNP import FoldAgentNP
 from agent.qlearn1.qlearn1AgentNP import Qlearn1AgentNP
 from agent.qlearn2.qlearn2AgentNP import Qlearn2AgentNP
+from agent.qlearnX.qlearnXAgentNP import QlearnXAgentNP
 from agent.random.randomAgentNP import RandomAgentNP
 from league.game import GameEngine
 from league.logger import GenericLogger
@@ -180,7 +181,7 @@ def plot_hand_strength_bet_distribution(agentActionLogger: AgentActionLogger):
 
 if __name__ == '__main__':
   # config
-  N_TESTCASES = 10_000
+  N_TESTCASES = 20_000
   INITIAL_CAPITAL = 200
   SMALL_BLIND = 1
   BIG_BLIND = 2
@@ -205,10 +206,12 @@ if __name__ == '__main__':
 
   mock_game_engine = GameEngine(N_TESTCASES, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, logger)
 
-  qlearning_agent = Qlearn2AgentNP.from_id('Qlearn2-55433380')
+  qlearning_agent = Qlearn1AgentNP.from_id('Qlearn1-83880857')
   aALogger = AgentActionLogger(qlearning_agent)
 
-  players = [RandomAgentNP('Rng-{}'.format(i), None) for i in range(3)] + [CallAgentNP('Cll-{}'.format(i), None) for i in range(2)] + [aALogger]
+  players = [RandomAgentNP('Rng-{}'.format(i), None) for i in range(3)] +\
+            [CallAgentNP('Cll-{}'.format(i), None) for i in range(2)] +\
+            [aALogger]
 
   # TODO: reenable
   # players = [FoldAgentNP('Dmy', None) for _ in range(3)] + [aALogger] + [FoldAgentNP('Dmy', None) for _ in range(2)]
@@ -225,10 +228,10 @@ if __name__ == '__main__':
 
     print('-' * 100)
     print('winnings:')
-    print('{:<30}: {:20} | {:7} {:7} {:7} {:7} {:7} {:7}'.format('name', 'total winning', 'SB', 'BB', 'EP', 'MP', 'CO', 'BTN'))
+    print('{:^30}: {:^18} | {:^8} {:^8} {:^8} {:^8} {:^8} {:^8}'.format('name', 'total winning', 'SB', 'BB', 'EP', 'MP', 'CO', 'BTN'))
     print('-' * 100)
-    for p, sw in cumulated_winnings.items():
-      print('{:<30}: {:20} | {:7} {:7} {:7} {:7} {:7} {:7}'.format(str(p), sum(sw), sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]))
+    for p, sw in sorted(cumulated_winnings.items(), key=lambda x: x[1], reverse=True):
+      print('{:<30}: {:<18.3f} | {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f}'.format(str(p), sum(sw), sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]))
     print('-' * 100)
 
 #  plot_hand_strength_bet_distribution(aALogger)
