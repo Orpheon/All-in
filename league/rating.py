@@ -45,8 +45,9 @@ class Rating:
     x = np.arange(len(self._ratings['history']))
 
     agent_types = list(set(agent[:agent.index("-")] for agent in self._ratings['all_agents']))
-    palette = sns.color_palette("husl", n_colors=len(agent_types))
-
+    #palette = sns.color_palette("husl", n_colors=len(agent_types))
+    palette = [(60,180,75), (255,225,25), (0,130,200), (245,130,48), (220,190,255), (128,0,0), (0,0,128), (128,128,128), (0,0,0)]
+    palette = [(r/255, g/255, b/255) for r,g,b in palette]
     for agent in self._ratings['all_agents']:
       for idx,type in enumerate(agent_types):
         if type in agent:
@@ -72,7 +73,8 @@ class Rating:
 
   def print_current_ratings(self):
     ratings = [(v['mu'], v['sigma'], k) for k, v in self._ratings['latest'].items()]
-    output = "\n".join("{0}: {1} +/- {2}".format(agent, rating, 2*sd) for rating, sd, agent in sorted(ratings, reverse=True))
+    output = "\n".join("{:>3}: {}: {} +/- {}".format(idx+1, agent, rating, 2*sd)
+                       for idx, (rating, sd, agent) in enumerate(sorted(ratings, reverse=True)))
     print(output)
 
   def update_from_placings(self, agents_placing):
