@@ -68,6 +68,8 @@ class Sac1AgentNP(BaseAgentLoadable):
           hole_cards, community_cards):
     state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
+    hole_cards.sort(axis=1)
+    community_cards[:,0:3].sort(axis=1)
 
     network_output = self.ac.act(torch.as_tensor(state, dtype=torch.float32), deterministic=not self.config['trainable'])
 
