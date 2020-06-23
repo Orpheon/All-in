@@ -73,7 +73,7 @@ class Rating:
 
   def print_current_ratings(self):
     ratings = [(v['mu'], v['sigma'], k) for k, v in self._ratings['latest'].items()]
-    output = "\n".join("{:>3}: {}: {} +/- {}".format(idx+1, agent, rating, 2*sd)
+    output = "\n".join("{:>3}: {:>25}: {:>7.2f} +/- {:>5.2f}".format(idx+1, agent, rating, 2*sd)
                        for idx, (rating, sd, agent) in enumerate(sorted(ratings, reverse=True)))
     print(output)
 
