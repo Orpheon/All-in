@@ -1,17 +1,4 @@
 {
   "agent_ids": {
-    "QlearnX-46888780": {
-      "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {
-        "device": "cuda",
-        "model_path": "qlearnX/frozen-models/QlearnX-46888780",
-        "noise_level": 0.1,
-        "q_learning_rate": 0.001,
-        "root_path": "qlearnX",
-        "trainable": false
-      }
-    }
   }
 }

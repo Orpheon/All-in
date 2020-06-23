@@ -2,36 +2,35 @@
   "agent_ids": {
     "1.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
     },
     "2.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
     },
     "3.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
     },
     "4.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
     },
     "5.0": {
       "matchup_info": {
-        "type": "teacher"
-      },
-      "setup": {}
-    },
-    "6.0": {
-      "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}

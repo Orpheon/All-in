@@ -2,30 +2,35 @@
   "agent_ids": {
     "RandomAgent-1.0": {
       "matchup_info": {
-        "type": "teacher"
+        "type": "teacher",
+        "age": 0
       },
       "setup": {}
     },
     "RandomAgent-2.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
     },
     "RandomAgent-3.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
     },
     "RandomAgent-4.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
     },
     "RandomAgent-5.0": {
       "matchup_info": {
+        "age": 0,
         "type": "teacher"
       },
       "setup": {}
