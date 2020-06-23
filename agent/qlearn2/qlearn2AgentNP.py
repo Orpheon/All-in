@@ -24,7 +24,7 @@ class Qlearn2AgentNP(BaseAgentLoadable):
     self.INITAL_CAPITAL = initial_capital
     self.N_PLAYERS = n_players
 
-    q_learning_rate = self.config['q_learning_rate']
+    q_learning_rate = self.config['setup']['q_learning_rate']
 
     # 5 community cards x 53 (52 cards + "unknown") + 2 holecards x 52,
     # (1 position in this round + 1 folded + 1 pot investment total + 1 pot investment this round + 1 which player last raised) x 6
@@ -32,18 +32,19 @@ class Qlearn2AgentNP(BaseAgentLoadable):
     self.obs_dim = (5) * 53 + (2) * 52 + (1 + 1 + 1 + 1 + 1) * 6 + (1) * 5
     self.act_dim = 7
 
-    self.q = models.MLPQFunction(self.obs_dim, self.act_dim, trainable=self.config['trainable'], device=self.config['device'])
+    self.q = models.MLPQFunction(self.obs_dim, self.act_dim, trainable=self.config['setup']['trainable'],
+                                 device=self.config['setup']['device'])
 
-    self.possible_actions = torch.zeros((self.BATCH_SIZE, self.act_dim), device=self.config['device'])
+    self.possible_actions = torch.zeros((self.BATCH_SIZE, self.act_dim), device=self.config['setup']['device'])
     self.possible_raises = np.array([0, 0, 4, 10, 20, 100, 200])
 
-    if self.config['trainable']:
+    if self.config['setup']['trainable']:
       self.reward = torch.zeros(self.BATCH_SIZE)
       self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim,
                                                     act_dim=self.act_dim,
                                                     batch_size=self.BATCH_SIZE,
                                                     size=40,
-                                                    device=self.config['device'])
+                                                    device=self.config['setup']['device'])
 
       self.q_optimizer = torch.optim.Adam(self.q.parameters(), lr=q_learning_rate)
 
@@ -51,10 +52,10 @@ class Qlearn2AgentNP(BaseAgentLoadable):
       self.prev_state = None
       self.prev_action = None
 
-      if os.path.exists(os.path.join(self.config['root_path'], "checkpoints")):
+      if os.path.exists(os.path.join(self.config['setup']['root_path'], "checkpoints")):
         self.load_checkpoint()
     else:
-      self.q.load(self.config['model_path'])
+      self.q.load(self.config['setup']['model_path'])
 
   def act(self, player_idx, round, active_games, current_bets, min_raise, prev_round_investment, folded, last_raiser,
           hole_cards, community_cards):
@@ -64,11 +65,11 @@ class Qlearn2AgentNP(BaseAgentLoadable):
     community_cards[:,0:3].sort(axis=1)
 
     actions, amounts, actions_serialized = self.choose_action(
-      torch.as_tensor(state, dtype=torch.float32, device=self.config['device']),
+      torch.as_tensor(state, dtype=torch.float32, device=self.config['setup']['device']),
       current_bets, prev_round_investment[:, player_idx] + current_bets[:, player_idx]
     )
 
-    if self.config['trainable']:
+    if self.config['setup']['trainable']:
       if not self.first_round:
         self.replaybuffer.store(obs=self.prev_state,
                                 act=self.prev_action,
@@ -82,7 +83,7 @@ class Qlearn2AgentNP(BaseAgentLoadable):
 
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                      hole_cards, community_cards, gains):
-    if self.config['trainable']:
+    if self.config['setup']['trainable']:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
       scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS/2 - 1)) * 2 / self.N_PLAYERS
@@ -91,7 +92,7 @@ class Qlearn2AgentNP(BaseAgentLoadable):
       lost_money = (gains / self.INITAL_CAPITAL)
       lost_money[folded[:, player_idx] == 0] = 0
 
-      self.reward = torch.Tensor(scaled_gains).to(self.config['device'])
+      self.reward = torch.Tensor(scaled_gains).to(self.config['setup']['device'])
       self.replaybuffer.store(obs=self.prev_state,
                               act=self.prev_action,
                               next_obs=state,
@@ -99,6 +100,8 @@ class Qlearn2AgentNP(BaseAgentLoadable):
       self.logger.store(Reward=scaled_gains, LostInFolding=lost_money, LostGeneral=(gains / self.INITAL_CAPITAL))
       self.train()
       self.save_checkpoint()
+      self.config['matchup_info']['age'] += 1
+      self.save_config()
       # FIXME: Remember that replaybuffer is *not* emptied here
 
   def train(self):
@@ -169,17 +172,17 @@ class Qlearn2AgentNP(BaseAgentLoadable):
     with torch.no_grad():
       scores[:, 0] = investment_normalized
       for idx in range(1, self.possible_actions.shape[1]):
-        onehot_actions = torch.eye(self.act_dim, device=self.config['device'])[
-          torch.full((self.BATCH_SIZE,), idx, dtype=torch.long, device=self.config['device'])
+        onehot_actions = torch.eye(self.act_dim, device=self.config['setup']['device'])[
+          torch.full((self.BATCH_SIZE,), idx, dtype=torch.long, device=self.config['setup']['device'])
         ]
         scores[:, idx] = self.q(network_input, onehot_actions).cpu().numpy()
 
       actions = np.argmax(scores, axis=1)
 
-    if self.config['trainable']:
+    if self.config['setup']['trainable']:
       dice = np.random.random(self.BATCH_SIZE)
       rand_actions = np.random.randint(1, self.act_dim, self.BATCH_SIZE)
-      actions[dice <= self.config['noise_level']] = rand_actions[dice <= self.config['noise_level']]
+      actions[dice <= self.config['setup']['noise_level']] = rand_actions[dice <= self.config['setup']['noise_level']]
 
     actions_array = np.eye(self.act_dim)[actions]
     amounts = self.possible_raises[actions]
@@ -220,33 +223,34 @@ class Qlearn2AgentNP(BaseAgentLoadable):
     self.logger.store(LossQ=loss_q.item(), **q_info)
 
   def save_checkpoint(self):
-    path = os.path.join(self.config['root_path'], 'checkpoints')
+    path = os.path.join(self.config['setup']['root_path'], 'checkpoints')
     self.q.save(path)
     torch.save(self.q_optimizer.state_dict(), os.path.join(path, 'q_opt.optb'))
 
   def load_checkpoint(self):
-    path = os.path.join(self.config['root_path'], 'checkpoints')
+    path = os.path.join(self.config['setup']['root_path'], 'checkpoints')
     self.q.load(path)
     self.q_optimizer.load_state_dict(torch.load(os.path.join(path, 'q_opt.optb')))
 
   def spawn_clone(self):
-    root = os.path.join(self.config['root_path'], "frozen-models")
+    root = os.path.join(self.config['setup']['root_path'], "frozen-models")
     os.makedirs(root, exist_ok=True)
-    new_agent_uuid = self.config['root_path'].capitalize()+"-"+"".join(str(x) for x in np.random.randint(0, 9, 8).tolist())
-    path = os.path.join(root, new_agent_uuid)
-    self.q.save(path)
+    new_agent_uuid = self.config['setup']['root_path'].capitalize()+"-"+"".join(str(x) for x in np.random.randint(0, 9, 8).tolist())
+    new_agent_path = os.path.join(root, new_agent_uuid)
+    self.q.save(new_agent_path)
+
+    # update generation
+    self.config['setup']['generation'] += 1
+    self.save_config()
 
     with open(self._config_file_path(), 'r') as f:
       config_data = json.load(f)
 
-    config_data['agent_ids'][new_agent_uuid] = {
-      "setup": self.config,
-      "matchup_info": {
-        "type": "teacher"
-      }
-    }
+    config_data['agent_ids'][new_agent_uuid] = self.config.copy()
+    config_data['agent_ids'][new_agent_uuid]['matchup_info']['type'] = 'teacher'
+    config_data['agent_ids'][new_agent_uuid]['matchup_info']['age'] = 0
     config_data['agent_ids'][new_agent_uuid]["setup"]["trainable"] = False
-    config_data['agent_ids'][new_agent_uuid]["setup"]["model_path"] = path
+    config_data['agent_ids'][new_agent_uuid]["setup"]["model_path"] = new_agent_path
 
 
     with open(self._config_file_path(), 'w') as f:
