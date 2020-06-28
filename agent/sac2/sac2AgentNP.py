@@ -1,35 +1,35 @@
-from agent.baseAgentLoadable import BaseAgentLoadable
+from agent.baseAgentNP import BaseAgentNP
 from agent.sac2 import models
 from agent.sac2 import replaybuffer
 from league.spinningupLogger import EpochLogger
 
-from copy import deepcopy
 import torch
 import itertools
 import os
 import numpy as np
-import json
 
 import constants
 
+ALPHA = 0.005
+DEVICE = 'cuda'
+GAMMA = 1.0
+PI_LEARNING_RATE = 0.1
+Q_LEARNING_RATE = 0.001
+ROOT_PATH = 'sac1'
 
-class Sac2AgentNP(BaseAgentLoadable):
-  @classmethod
-  def _config_file_path(cls):
-    return './agent/sac2/config.json'
 
+class Sac2AgentNP(BaseAgentNP):
+  MODEL_FILES = ['policy.modelb', 'q1.modelb', 'q2.modelb']
   logger = EpochLogger(output_dir='sac2/logs', output_fname='progress.csv')
+
+  def __str__(self):
+    return 'Sac2 {}'.format('T' if self.trainable else 'N')
 
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
     self.REPLAY_BATCH_SIZE = 1000
     self.INITAL_CAPITAL = initial_capital
     self.N_PLAYERS = n_players
-
-    self.alpha = self.config['setup']['alpha']
-    self.gamma = self.config['setup']['gamma']
-    q_learning_rate = self.config['setup']['q_learning_rate']
-    pi_learning_rate = self.config['setup']['pi_learning_rate']
 
     # 5 community cards x 53 (52 cards + "unknown") + 2 holecards x 52,
     # (1 position in this round + 1 folded + 1 pot investment total + 1 pot investment this round + 1 which player last raised) x 6
@@ -38,40 +38,36 @@ class Sac2AgentNP(BaseAgentLoadable):
     # Action dimensions
     self.act_dim = 4
 
-    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.config['setup']['trainable'],
-                                    device=self.config['setup']['device'])
+    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.trainable, device=DEVICE)
 
-    if self.config['setup']['trainable']:
+    if self.trainable:
       self.reward = torch.zeros(self.BATCH_SIZE)
       self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim,
                                                     act_dim=self.act_dim,
                                                     size=30 * self.BATCH_SIZE,
-                                                    device=self.config['setup']['device'])
+                                                    device=DEVICE)
 
-      self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=pi_learning_rate)
+      self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=PI_LEARNING_RATE)
       self.q_optimizer = torch.optim.Adam(itertools.chain(self.ac.q1.parameters(), self.ac.q2.parameters()),
-                                          lr=q_learning_rate)
+                                          lr=Q_LEARNING_RATE)
 
       self.first_round = True
       self.prev_state = None
       self.prev_action = None
 
-      if os.path.exists(os.path.join(self.config['setup']['root_path'], "checkpoints")):
-        self.load_checkpoint()
-    else:
-      self.ac.load(self.config['setup']['model_path'])
+    self.load_model()
 
   def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
           hole_cards, community_cards):
     state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
     hole_cards.sort(axis=1)
-    community_cards[:,0:3].sort(axis=1)
+    community_cards[:, 0:3].sort(axis=1)
 
     network_output = self.ac.act(torch.as_tensor(state, dtype=torch.float32),
-                                 deterministic=not self.config['setup']['trainable'])
+                                 deterministic=not self.trainable)
 
-    if self.config['setup']['trainable']:
+    if self.trainable:
       if not self.first_round:
         self.replaybuffer.store(obs=self.prev_state[active_rounds],
                                 act=self.prev_action[active_rounds],
@@ -91,24 +87,23 @@ class Sac2AgentNP(BaseAgentLoadable):
 
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                      hole_cards, community_cards, gains):
-    if self.config['setup']['trainable']:
+    if self.trainable:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
-      scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS/2 - 1)) * 2 / self.N_PLAYERS
+      scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS / 2 - 1)) * 2 / self.N_PLAYERS
       # DEBUGTOOL
       lost_money = (gains / self.INITAL_CAPITAL)
       lost_money[folded[:, player_idx] == 0] = 0
 
-      self.reward = torch.Tensor(scaled_gains).to(self.config['setup']['device'])
+      self.reward = torch.Tensor(scaled_gains).to(DEVICE)
       self.replaybuffer.store(obs=self.prev_state,
                               act=self.prev_action,
                               next_obs=state,
                               indices=np.arange(self.BATCH_SIZE))
       self.logger.store(Reward=scaled_gains, LostInFolding=lost_money, LostGeneral=(gains / self.INITAL_CAPITAL))
       self.train()
-      self.save_checkpoint()
-      self.config['matchup_info']['age'] += 1
-      self.save_config()
+
+      self.save_model()
       # FIXME: Remember that replaybuffer is *not* emptied here
 
   def train(self):
@@ -140,7 +135,7 @@ class Sac2AgentNP(BaseAgentLoadable):
     # First convert the treys card IDs into indices
     hole_cards_converted = 13 * np.log2(np.right_shift(hole_cards, 12) & 0xF) + (np.right_shift(hole_cards, 8) & 0xF)
     community_cards_converted = 13 * np.log2(np.right_shift(community_cards, 12) & 0xF) + (
-      np.right_shift(community_cards, 8) & 0xF)
+        np.right_shift(community_cards, 8) & 0xF)
     # Then convert those indices into 1h
     hole_cards_1h = (np.arange(52) == hole_cards_converted[..., None] - 1).astype(int)
     known_community_cards_1h = (np.arange(53) == community_cards_converted[..., None] - 1).astype(int)
@@ -184,11 +179,12 @@ class Sac2AgentNP(BaseAgentLoadable):
     actions[current_bets.sum(axis=1) == 0] = constants.CALL
 
     current_stake = current_bets[:, player_idx] + prev_round_investment[:, player_idx]
-    amounts = np.clip((network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2, min_raise, self.INITAL_CAPITAL - current_stake)
+    amounts = np.clip((network_output[:, 1] + 1) * self.INITAL_CAPITAL / 2, min_raise,
+                      self.INITAL_CAPITAL - current_stake)
 
-    self.logger.store(Raises=100*np.mean(actions == constants.RAISE),
-                      Calls=100*np.mean(actions == constants.CALL),
-                      Folds=100*np.mean(actions == constants.FOLD),
+    self.logger.store(Raises=100 * np.mean(actions == constants.RAISE),
+                      Calls=100 * np.mean(actions == constants.CALL),
+                      Folds=100 * np.mean(actions == constants.FOLD),
                       )
 
     return actions, amounts
@@ -203,7 +199,7 @@ class Sac2AgentNP(BaseAgentLoadable):
     with torch.no_grad():
       # Target actions come from *current* policy
       a2, logp_a2 = self.ac.pi(o2)
-      target = self.reward[idx] - self.alpha * logp_a2
+      target = self.reward[idx] - ALPHA * logp_a2
 
     # MSE loss against Bellman backup
     loss_q1 = ((q1 - target) ** 2).mean()
@@ -211,7 +207,7 @@ class Sac2AgentNP(BaseAgentLoadable):
     loss_q = loss_q1 + loss_q2
 
     # Useful info for logging
-    q_info = dict(QVals=((q1+q2)/2).cpu().detach().numpy())
+    q_info = dict(QVals=((q1 + q2) / 2).cpu().detach().numpy())
     # q_info = {}
 
     return loss_q, q_info
@@ -225,8 +221,9 @@ class Sac2AgentNP(BaseAgentLoadable):
     q_pi = torch.min(q1_pi, q2_pi)
 
     # Entropy-regularized policy loss
-    loss_pi = (self.alpha * logp_pi - q_pi).mean()
-    self.logger.store(QContribPiLoss=(torch.abs(q_pi) / (torch.abs(q_pi) + torch.abs(self.alpha * logp_pi))).mean().cpu().detach().numpy())
+    loss_pi = (ALPHA * logp_pi - q_pi).mean()
+    self.logger.store(
+      QContribPiLoss=(torch.abs(q_pi) / (torch.abs(q_pi) + torch.abs(ALPHA * logp_pi))).mean().cpu().detach().numpy())
 
     # Useful info for logging
     pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
@@ -262,37 +259,16 @@ class Sac2AgentNP(BaseAgentLoadable):
     # Record things
     self.logger.store(LossPi=loss_pi.item(), **pi_info)
 
-  def save_checkpoint(self):
-    path = os.path.join(self.config['setup']['root_path'], 'checkpoints')
-    self.ac.save(path)
-    torch.save(self.pi_optimizer.state_dict(), os.path.join(path, 'pi_opt.optb'))
-    torch.save(self.q_optimizer.state_dict(), os.path.join(path, 'q_opt.optb'))
+  def load_model(self):
+    if os.path.exists(self.model_path):
+      self.ac.load(self.model_path)
+      if self.trainable:
+        self.pi_optimizer.load_state_dict(torch.load(os.path.join(self.model_path, 'pi_opt.optb')))
+        self.q_optimizer.load_state_dict(torch.load(os.path.join(self.model_path, 'q_opt.optb')))
 
-  def load_checkpoint(self):
-    path = os.path.join(self.config['setup']['root_path'], 'checkpoints')
-    self.ac.load(path)
-    self.pi_optimizer.load_state_dict(torch.load(os.path.join(path, 'pi_opt.optb')))
-    self.q_optimizer.load_state_dict(torch.load(os.path.join(path, 'q_opt.optb')))
-
-  def spawn_clone(self):
-    root = os.path.join(self.config['setup']['root_path'], "frozen-models")
-    os.makedirs(root, exist_ok=True)
-    new_agent_uuid = self.config['setup']['root_path'].capitalize()+"-"+"".join(str(x) for x in np.random.randint(0, 9, 8).tolist())
-    new_agent_path = os.path.join(root, new_agent_uuid)
-    self.ac.save(new_agent_path, policy_only=True)
-
-    # update generation
-    self.config['setup']['generation'] += 1
-    self.save_config()
-
-    with open(self._config_file_path(), 'r') as f:
-      config_data = json.load(f)
-
-    config_data['agent_ids'][new_agent_uuid] = self.config.copy()
-    config_data['agent_ids'][new_agent_uuid]['matchup_info']['type'] = 'teacher'
-    config_data['agent_ids'][new_agent_uuid]['matchup_info']['age'] = 0
-    config_data['agent_ids'][new_agent_uuid]["setup"]["trainable"] = False
-    config_data['agent_ids'][new_agent_uuid]["setup"]["model_path"] = new_agent_path
-
-    with open(self._config_file_path(), 'w') as f:
-      json.dump(config_data, f, indent=2, sort_keys=True)
+  def save_model(self):
+    print('saved', self.model_path)
+    self.ac.save(self.model_path)
+    if self.trainable:
+      torch.save(self.pi_optimizer.state_dict(), os.path.join(self.model_path, 'pi_opt.optb'))
+      torch.save(self.q_optimizer.state_dict(), os.path.join(self.model_path, 'q_opt.optb'))
