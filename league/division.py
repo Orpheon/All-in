@@ -3,6 +3,8 @@ from operator import itemgetter
 import random
 import numpy as np
 
+from league.agentManager import AgentManager
+
 
 class Division:
 
@@ -38,42 +40,132 @@ class Division:
     raise NotImplementedError('League _generate_matchup not implemented')
 
   def load(self):
-    raise NotImplementedError('League load not implemented')
+    with open(self.file_path, 'r') as f:
+      data = json.load(f)
+    self.state = data
+    print('[League <- {}]: loaded '.format(self.file_path))
 
   def save(self):
-    raise NotImplementedError('League save not implemented')
+    with open(self.file_path, 'w') as f:
+      json.dump(self.state, f, sort_keys=True, indent=2)
+    print('[League -> {}]: saved'.format(self.file_path))
 
   def clone_mutables(self):
     raise NotImplementedError('League clone_mutables not implemented')
 
 
-class NormalDivision(Division):
+class RandomDivision(Division):
 
   def __init__(self, file_path, game_engine, leaderboard, agent_manager):
     super().__init__(file_path, game_engine, leaderboard, agent_manager)
-    self.agents = {'teachers': [], 'students': []}
+    self.state = {'type': 'RandomDivision', 'teachers': [], 'students': []}
 
   def _generate_matchup(self):
-    student = random.choice(self.agents['students'])
-    teachers = random.choices(self.agents['teachers'], k=5)
+    student = random.choice(self.state['students'])
+    teachers = random.choices(self.state['teachers'], k=5)
     matchup_ids = [student, *teachers]
     random.shuffle(matchup_ids)
     return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
 
   def load(self):
-    with open(self.file_path, 'r') as f:
-      data = json.load(f)
-    self.agents = data
-    print('[League <- {}]: loaded T:{} S:{} '.format(self.file_path, len(self.agents['teachers']),
-                                                     len(self.agents['students'])))
-
-  def save(self):
-    with open(self.file_path, 'w') as f:
-      json.dump(self.agents, f, sort_keys=True, indent=2)
-    print('[League -> {}]: saved T:{} S:{}'.format(self.file_path, len(self.agents['teachers']),
-                                                   len(self.agents['students'])))
+    super().load()
+    assert self.state['type'] == 'RandomDivision'
 
   def clone_mutables(self):
-    for agent_id in self.agents['students']:
+    for agent_id in self.state['students']:
       new_id = self.agent_manager.clone(agent_id)
-      self.agents['teachers'].append(new_id)
+      self.state['teachers'].append(new_id)
+
+
+class OverfitDivision(Division):
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+    self.state = {'type': 'RandomDivision', 'teacher': None, 'students': [], 'alumni': [], 'is_learning': True}
+
+  def _generate_matchup(self):
+    teachers = [self.state['teacher'] for _ in range(5)]
+
+    if self.state['is_learning']:
+      student = random.choice(self.state['students'])
+    else:
+      student = random.choice(self.state['alumni'])
+
+    matchup_ids = [student, *teachers]
+    random.shuffle(matchup_ids)
+    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+
+  def load(self):
+    super().load()
+    assert self.state['type'] == 'RandomDivision'
+
+  def set_learning(self, teacher):
+    self.state['is_learning'] = True
+    self.state['teacher'] = teacher
+
+  def set_assessing(self):
+    self.state['alumni'] = []
+    for s in self.state['students']:
+      new_id = self.agent_manager.clone(s)
+      self.state['alumin'].append(new_id)
+    self.state['is_learning'] = False
+
+  def get_best_agent(self):
+    return self.leaderboard.get_rankings()[0][0]
+
+
+class PermaEvalChoiceDivision(Division):
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+    self.state = {'type': 'PermaEvalChoiceDivision', 'n_rounds_played': {}}
+
+  def _generate_matchup(self):
+    all_Teachers = [id for id in self.agent_manager.agents if not self.agent_manager.get_info(id).TRAINABLE]
+
+    random_agents = random.sample(all_Teachers, k=5)
+    agents_sorted_by_usage = sorted([(agent_id, self.state['n_rounds_played'].get(agent_id, 0))
+                                     for agent_id in all_Teachers], key=lambda x: x[1])
+
+    least_used_agent = agents_sorted_by_usage[0]
+
+    matchup_ids = [least_used_agent[0], *random_agents]
+    random.shuffle(matchup_ids)
+
+    for id in matchup_ids:
+      self.state['n_rounds_played'][id] = self.state['n_rounds_played'].get(id, 0) + 1
+
+    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+
+  def load(self):
+    super().load()
+    assert self.state['type'] == 'PermaEvalChoiceDivision'
+
+
+class PermaEvalSampleDivision(Division):
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+    self.state = {'type': 'PermaEvalSampleDivision', 'n_rounds_played': {}}
+
+  def _generate_matchup(self):
+    all_Teachers = [id for id in self.agent_manager.agents if not self.agent_manager.get_info(id).TRAINABLE]
+
+    random_agents = random.sample(all_Teachers, k=5)
+    agents_sorted_by_usage = sorted([(agent_id, self.state['n_rounds_played'].get(agent_id, 0))
+                                     for agent_id in all_Teachers], key=lambda x: x[1])
+    agents_sorted_by_usage_filtered = [(agent_id, nrp) for agent_id, nrp in agents_sorted_by_usage if agent_id not in random_agents]
+
+    if len(agents_sorted_by_usage_filtered) == 0:
+      least_used_agent = agents_sorted_by_usage[0]
+    else:
+      least_used_agent = agents_sorted_by_usage_filtered[0]
+
+    matchup_ids = [least_used_agent[0], *random_agents]
+    random.shuffle(matchup_ids)
+
+    for id in matchup_ids:
+      self.state['n_rounds_played'][id] = self.state['n_rounds_played'].get(id, 0) + 1
+
+    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+
+  def load(self):
+    super().load()
+    assert self.state['type'] == 'PermaEvalSampleDivision'

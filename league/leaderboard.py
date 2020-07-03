@@ -16,6 +16,7 @@ class Leaderboard:
     self.FILE_PATH = file_path
     self._trueskill = TrueSkill(mu=TRUESKILL_START_MU, sigma=TRUESKILL_START_SIGMA)
     self._ratings = {'current': {}, 'history': []}
+    self.changed = False
 
   def load(self):
     with open(self.FILE_PATH, 'r') as f:
@@ -23,12 +24,15 @@ class Leaderboard:
     self._ratings = data
     print('[Leaderboard <- {}]: loaded {} rankings over {} games'.format(self.FILE_PATH, len(self._ratings['current']),
                                                                          len(self._ratings['history'])))
+    self.changed = False
 
   def save(self):
-    with open(self.FILE_PATH, 'w') as f:
-      json.dump(self._ratings, f)
-    print('[Leaderboard -> {}]: saved {} rankings over {} games'.format(self.FILE_PATH, len(self._ratings['current']),
-                                                                        len(self._ratings['history'])))
+    if self.changed:
+      with open(self.FILE_PATH, 'w') as f:
+        json.dump(self._ratings, f)
+      print('[Leaderboard -> {}]: saved {} rankings over {} games'.format(self.FILE_PATH, len(self._ratings['current']),
+                                                                          len(self._ratings['history'])))
+    self.changed = False
 
   def update_from_placings(self, agents):
     current_ratings = [self._trueskill.Rating(*self._ratings['current'].get(agent, ())) for agent in agents]
@@ -39,6 +43,7 @@ class Leaderboard:
       self._ratings['current'][agent] = new_rating
       hist_append[agent] = new_rating
     self._ratings['history'].append(hist_append)
+    self.changed = True
 
   def get_rankings(self):
     sorted_ratings = sorted(self._ratings['current'].items(), key=lambda x: x[1][0], reverse=True)
@@ -46,6 +51,7 @@ class Leaderboard:
 
   def reset_rankings(self):
     self._ratings = {'current': {}, 'history': []}
+    self.changed = True
 
   def plot_history(self, agent_manager):
 
@@ -57,9 +63,10 @@ class Leaderboard:
     x = np.arange(len(self._ratings['history']))
 
     agent_types = {agent_type: idx for idx, agent_type in enumerate(AGENT_TYPES.keys())}
-    palette = sns.color_palette("husl", n_colors=len(agent_types))
-    # palette = [(60,180,75), (255,225,25), (0,130,200), (245,130,48), (220,190,255), (128,0,0), (0,0,128), (128,128,128), (0,0,0)]
-    # palette = [(r/255, g/255, b/255) for r,g,b in palette]
+    # palette = sns.color_palette("husl", n_colors=len(agent_types))
+    palette = [(60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (220, 190, 255), (128, 0, 0), (0, 0, 128),
+               (128, 128, 128), (0, 0, 0)]
+    palette = [(r / 255, g / 255, b / 255) for r, g, b in palette]
     for agent_id in self._ratings['current'].keys():
       agent_info = agent_manager.get_info(agent_id)
       color = palette[agent_types[agent_info.AGENT_TYPE]]
@@ -84,8 +91,10 @@ class Leaderboard:
     plt.show()
 
   def print_current_ratings(self, agent_manager):
-    ratings = [(v[0], v[1], k, agent_manager.get_info(k).AGENT_TYPE, 'S' if agent_manager.get_info(k).TRAINABLE else 'T') for k, v in self._ratings['current'].items()]
-    output = "\n".join("{:>3}: {:>10} {} {}: {:>7.2f} +/- {:>5.2f}".format(idx+1, at, aid, tr, rating, 2*sd)
+    ratings = [(v[0], v[1], k, agent_manager.get_info(k).AGENT_TYPE,
+                'S' if agent_manager.get_info(k).TRAINABLE else 'T')
+               for k, v in self._ratings['current'].items()]
+    output = "\n".join("{:>3}: {:>10} {} {}: {:>7.2f} +/- {:>5.2f}".format(idx + 1, at, aid, tr, rating, 2 * sd)
                        for idx, (rating, sd, aid, at, tr) in enumerate(sorted(ratings, reverse=True)))
     print(output)
 
@@ -93,12 +102,16 @@ class Leaderboard:
 if __name__ == '__main__':
   agent_manager = AgentManager('../savefiles/agent_manager.json', None)
   agent_manager.load()
-  leaderboard = Leaderboard('../savefiles/leaderboard_1.json')
-  leaderboard.load()
 
-  ratings = [r[0] for r in leaderboard._ratings['current'].values()]
-  print(sum(ratings)/len(ratings))
+  for l in ['perma_eval_choice', 'perma_eval_sample'] + ['random_{}'.format(i) for i in range(1,7)]:
 
-  leaderboard.print_current_ratings(agent_manager)
+    # select leaderboard to watch
+    leaderboard = Leaderboard('../savefiles/leaderboard_{}.json'.format(l))
+    leaderboard.load()
 
-  leaderboard.plot_history(agent_manager)
+    ratings = [r[0] for r in leaderboard._ratings['current'].values()]
+    print('average rating:', sum(ratings) / len(ratings))
+
+    leaderboard.print_current_ratings(agent_manager)
+
+    leaderboard.plot_history(agent_manager)

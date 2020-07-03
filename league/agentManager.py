@@ -33,6 +33,9 @@ class AgentManager:
     self.agents[id] = AgentInfo(agent_type, '{}/{}'.format(self.models_path, id), trainable)
     return id
 
+  def _add_agent_with_id(self, id, agent_type, trainable):
+    self.agents[id] = AgentInfo(agent_type, '{}/{}'.format(self.models_path, id), trainable)
+
   def get_info(self, id) -> AgentInfo:
     return self.agents[id]
 
