@@ -13,11 +13,15 @@ DEVICE = 'cuda'
 NOISE_LEVEL = 0.1
 Q_LEARNING_RATE = 0.001
 ROOT_PATH = 'qlearn3'
-
+REPLAYBUFFER_SIZE = 60
 
 class Qlearn3AgentNP(BaseAgentNP):
   MODEL_FILES = ['q.modelb']
   logger = EpochLogger(output_dir='qlearn3/logs', output_fname='progress.csv')
+
+  def __init__(self, trainable, model_path):
+    super().__init__(trainable, model_path)
+    self.acted = 0
 
   def __str__(self):
     return 'Qlearn3 {}'.format('T' if self.trainable else 'N')
@@ -43,7 +47,7 @@ class Qlearn3AgentNP(BaseAgentNP):
       self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim,
                                                     act_dim=self.act_dim,
                                                     batch_size=self.BATCH_SIZE,
-                                                    size=40,
+                                                    size=REPLAYBUFFER_SIZE,
                                                     device=DEVICE)
 
       self.q_optimizer = torch.optim.Adam(self.q.parameters(), lr=Q_LEARNING_RATE)
@@ -76,11 +80,14 @@ class Qlearn3AgentNP(BaseAgentNP):
       self.prev_state = state
       self.prev_action = actions_serialized
 
+      self.acted += 1
+
     return actions, amounts
 
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                      hole_cards, community_cards, gains):
-    if self.trainable:
+    #TODO: bugfix to prevent crash in case that agent never acted before game finish
+    if self.trainable and self.prev_state is not None:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
       scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS / 2 - 1)) * 2 / self.N_PLAYERS
@@ -90,6 +97,7 @@ class Qlearn3AgentNP(BaseAgentNP):
       lost_money[folded[:, player_idx] == 0] = 0
 
       self.reward = torch.Tensor(scaled_gains).to(DEVICE)
+
       self.replaybuffer.store(obs=self.prev_state,
                               act=self.prev_action,
                               next_obs=state,

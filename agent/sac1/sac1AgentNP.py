@@ -18,7 +18,7 @@ PI_LEARNING_RATE = 0.1
 POLYAK = 0.999
 Q_LEARNING_RATE = 0.001
 ROOT_PATH = 'sac1'
-
+REPLAYBUFFER_SIZE = 30
 
 class Sac1AgentNP(BaseAgentNP):
   MODEL_FILES = ['policy.modelb', 'q1.modelb', 'q2.modelb']
@@ -49,7 +49,7 @@ class Sac1AgentNP(BaseAgentNP):
 
       self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim,
                                                     act_dim=self.act_dim,
-                                                    size=30 * self.BATCH_SIZE,
+                                                    size=REPLAYBUFFER_SIZE * self.BATCH_SIZE,
                                                     device=DEVICE)
 
       self.pi_optimizer = torch.optim.Adam(self.ac.parameters(), lr=PI_LEARNING_RATE)
@@ -95,7 +95,8 @@ class Sac1AgentNP(BaseAgentNP):
 
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                      hole_cards, community_cards, gains):
-    if self.trainable:
+    #TODO: bugfix to prevent crash in case that agent never acted before game finish
+    if self.trainable and self.prev_state is not None:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
       scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS / 2 - 1)) * 2 / self.N_PLAYERS
