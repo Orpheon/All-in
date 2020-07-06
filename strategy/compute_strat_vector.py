@@ -1,6 +1,7 @@
 import numpy as np
 import treys
 import random
+import os
 
 import constants
 
@@ -51,9 +52,8 @@ def compute_strat_vector(agent):
   N_OWN_POT_SIZE_BINS = 6
   N_MIN_SAMPLES_PER_BIN = 25
   BATCH_SIZE = 10000
-  MIN_RAISE = 4 / 200
-  # TODO: Action space
-  ACTION_SPACE_BINS = 10
+  MIN_RAISE = 4 // 200
+  ACTION_SPACE_BINS = 200 // 4 + 1
 
   # Fixed
   N_ROUNDS = 4
@@ -87,10 +87,13 @@ def compute_strat_vector(agent):
     np.load("5card_rank_percentile.npy")
   ))
 
+  preflop_table = np.load("preflop_ranks.npy").tolist()
+
   evaluator = treys.Evaluator()
 
   lowest_bin_count = np.amin(n_games)
   while lowest_bin_count <= N_MIN_SAMPLES_PER_BIN:
+    print("Starting filling round, lowest number currently", lowest_bin_count)
     for round in range(N_ROUNDS):
       n_community_cards = [0, 3, 4, 5][round]
       for seating_position in range(N_SEATING_POSITIONS):
@@ -115,8 +118,9 @@ def compute_strat_vector(agent):
                 percentile = 1 - ranktable[rank, round - constants.FLOP]
                 rank_bin[i] = int(percentile * N_CARD_PERCENTILE_BINS)
               else:
-                pass
-                # TODO preflop card ranking
+                sorted_hole = sorted(hole_cards[i].tolist())
+                percentile = preflop_table.index(sorted_hole) / len(preflop_table)
+                rank_bin[i] = int(percentile * N_CARD_PERCENTILE_BINS)
 
             current_bets = np.zeros((BATCH_SIZE, N_PLAYERS_TOTAL))
             prev_round_investment = np.zeros((BATCH_SIZE, N_PLAYERS_TOTAL))
@@ -156,11 +160,20 @@ def compute_strat_vector(agent):
               hole_cards=hole_cards,
               community_cards=community_cards[:, :n_community_cards]
             )
-            # TODO: Handle actions and amounts somehow
+            amounts[actions == constants.CALL] = MIN_RAISE
+            action_bins = np.floor(amounts * ACTION_SPACE_BINS)
+            action_bins[actions == constants.FOLD] = 0
 
             total_pot_idx = int(np.sum(current_bets + prev_round_investment, axis=1) * N_TOTAL_POT_BINS / N_PLAYERS_TOTAL)
 
             for k in range(N_CARD_PERCENTILE_BINS):
               n_games[seating_position, round, n_active_players, own_pot_idx, total_pot_idx, k] += np.count_nonzero(rank_bin == k)
+              strategy[seating_position, round, n_active_players, own_pot_idx, total_pot_idx, k, action_bins] += np.count_nonzero(rank_bin == k)
 
     lowest_bin_count = np.amin(n_games)
+
+  print("Strategy vector for {0} finished, min {1}, max {2} games.".format(str(agent), np.amin(n_games), np.amax(n_games)))
+  print("Saving..")
+  os.makedirs("strat_vectors", exist_ok=True)
+  np.save(os.path.join("strat_vectors", str(agent)+"_strategy.npy"))
+  print("Saved.")
