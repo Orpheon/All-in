@@ -39,9 +39,9 @@ class AgentManager:
   def get_info(self, id) -> AgentInfo:
     return self.agents[id]
 
-  def get_instance(self, id):
-    agent = self.agents[id]
-    return AGENT_TYPES[agent.AGENT_TYPE].get_instance(agent.TRAINABLE, agent.MODEL_PATH)
+  def get_instance(self, agent_id):
+    agent = self.agents[agent_id]
+    return AGENT_TYPES[agent.AGENT_TYPE].get_instance(agent.TRAINABLE, agent.MODEL_PATH, agent_id)
 
   def load(self):
     with open(self.FILE_PATH, 'r') as f:
