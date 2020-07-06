@@ -15,6 +15,7 @@ Q_LEARNING_RATE = 0.001
 ROOT_PATH = 'qlearn3'
 REPLAYBUFFER_SIZE = 60
 
+
 class Qlearn3AgentNP(BaseAgentNP):
   MODEL_FILES = ['q.modelb']
   logger = EpochLogger(output_dir='qlearn3/logs', output_fname='progress.csv')
@@ -24,7 +25,7 @@ class Qlearn3AgentNP(BaseAgentNP):
     self.acted = 0
 
   def __str__(self):
-    return 'Qlearn3 {}'.format('T' if self.trainable else 'N')
+    return 'Qln3 {} {}'.format('T' if self.trainable else 'N', super().__str__())
 
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
@@ -86,7 +87,7 @@ class Qlearn3AgentNP(BaseAgentNP):
 
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                      hole_cards, community_cards, gains):
-    #TODO: bugfix to prevent crash in case that agent never acted before game finish
+    # TODO: bugfix to prevent crash in case that agent never acted before game finish
     if self.trainable and self.prev_state is not None:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)

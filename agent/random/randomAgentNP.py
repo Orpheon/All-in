@@ -4,13 +4,10 @@ from agent.baseAgentNP import BaseAgentNP
 
 
 class RandomAgentNP(BaseAgentNP):
-
-  def __init__(self, trainable, model_path):
-    super().__init__(trainable, model_path)
-    self.rng = np.random.RandomState()
+  rng = np.random.RandomState()
 
   def __str__(self):
-    return 'Random {}'.format('T' if self.trainable else 'N')
+    return 'Rndm {} {}'.format('T' if self.trainable else 'N', super().__str__())
 
   def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
           hole_cards, community_cards):

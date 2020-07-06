@@ -21,7 +21,7 @@ class Qlearn1AgentNP(BaseAgentNP):
   logger = EpochLogger(output_dir='qlearn1/logs', output_fname='progress.csv')
 
   def __str__(self):
-    return 'Qlearn1 {}'.format('T' if self.trainable else 'N')
+    return 'Qln1 {} {}'.format('T' if self.trainable else 'N', super().__str__())
 
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size

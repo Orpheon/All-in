@@ -23,7 +23,8 @@ class Sac2AgentNP(BaseAgentNP):
   logger = EpochLogger(output_dir='sac2/logs', output_fname='progress.csv')
 
   def __str__(self):
-    return 'Sac2 {}'.format('T' if self.trainable else 'N')
+    return 'Sac2 {} {}'.format('T' if self.trainable else 'N', super().__str__())
+
 
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
