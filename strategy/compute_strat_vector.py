@@ -175,9 +175,9 @@ def compute_strat_vector(agent, agent_name, verbose=False):
             # input()
 
             action_bins = 3 + np.floor(amounts * (ACTION_SPACE_BINS - 3) / (INITIAL_CAPITAL+1)).astype(int)
-            action_bins[actions == constants.FOLD] = 0
-            action_bins[actions == constants.CALL] = 1
-            action_bins[np.logical_and(actions == constants.CALL, current_bets.sum(axis=1) == 0)] = 2
+            action_bins[actions == constants.FOLD] = constants.FOLD
+            action_bins[actions == constants.CALL] = constants.CALL
+            action_bins[np.logical_and(actions == constants.CALL, current_bets.sum(axis=1) == 0)] = constants.CHECK
 
             # total_pot_idx = np.floor(np.sum(current_bets + prev_round_investment, axis=1) * N_TOTAL_POT_BINS / N_PLAYERS_TOTAL / (INITIAL_CAPITAL + 1)).astype(int)
 

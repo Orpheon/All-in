@@ -8,10 +8,6 @@ def compute_playstyle(strategy):
   n_calls = np.sum(strategy[..., constants.CALL])
   n_checks = np.sum(strategy[..., constants.CALL + 1])
   n_raises = np.sum(strategy[..., constants.RAISE + 1:])
-  print("folds", n_folds)
-  print("calls", n_calls)
-  print("checks", n_checks)
-  print("raises", n_raises)
 
   if n_calls > 0:
     aggression_factor = n_raises / n_calls

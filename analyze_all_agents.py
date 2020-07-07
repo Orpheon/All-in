@@ -13,4 +13,4 @@ if __name__ == '__main__':
     print("{0}%".format(round(100*idx/len(agent_ids), 2)))
     agent = agent_manager.get_instance(agent_id)
     if not os.path.exists(os.path.join("strategy", "strat_vectors", str(agent)+agent_id)):
-      compute_strat_vector(agent, str(agent)+agent_id, verbose=True)
+      compute_strat_vector(agent, str(agent)+agent_id, verbose=False)
