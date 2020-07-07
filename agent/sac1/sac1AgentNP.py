@@ -62,7 +62,7 @@ class Sac1AgentNP(BaseAgentNP):
 
     self.load_model()
 
-  def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
+  def act(self, player_idx, round, active_games, current_bets, min_raise, prev_round_investment, folded, last_raiser,
           hole_cards, community_cards):
     state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                      last_raiser, hole_cards, community_cards)
@@ -74,11 +74,11 @@ class Sac1AgentNP(BaseAgentNP):
 
     if self.trainable:
       if not self.first_round:
-        n_rounds = active_rounds.sum()
-        self.replaybuffer.store(obs=self.prev_state[active_rounds],
-                                act=self.prev_action[active_rounds],
+        n_rounds = active_games.sum()
+        self.replaybuffer.store(obs=self.prev_state[active_games],
+                                act=self.prev_action[active_games],
                                 rew=np.zeros(n_rounds),
-                                next_obs=state[active_rounds],
+                                next_obs=state[active_games],
                                 done=np.zeros(n_rounds),
                                 batch_size=n_rounds)
       self.first_round = False
