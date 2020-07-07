@@ -67,3 +67,6 @@ class AgentManager:
       print('[AgentManager] cloned {} -> {}'.format(id, new_id))
       return new_id
     return None
+
+  def get_all_static_agent_ids(self):
+    return [id for id,agent in self.agents.items() if not agent.TRAINABLE]
