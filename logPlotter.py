@@ -66,6 +66,21 @@ class LogfileCollector:
       plt.title('game {}/{}'.format(idx + 1, len(self.cashflows)))
       plt.savefig('{}cashflow_{}-{}'.format(self.output_folder, idx + 1, len(self.cashflows)))
       plt.close()
+      print('[logplotter -> {}cashflow_{}-{}]'.format(self.output_folder, idx + 1, len(self.cashflows)))
+
+      print(cashflow_pivot.keys())
+      for k1 in cashflow_pivot.keys():
+        for k2 in cashflow_pivot.keys():
+          if k1 < k2:
+            cashflow_pivot[k1][k2], cashflow_pivot[k2][k1] = cashflow_pivot[k1][k2] - cashflow_pivot[k2][k1], cashflow_pivot[k2][k1] - cashflow_pivot[k1][k2]
+      f, ax = plt.subplots(figsize=(9, 6))
+      cmap = sns.diverging_palette(220, 20, sep=20, as_cmap=True)
+      sns.heatmap(cashflow_pivot, annot=True, fmt=".3f", linewidths=.5, ax=ax, cmap=cmap)
+      plt.tight_layout()
+      plt.title('game {}/{}'.format(idx + 1, len(self.cashflows)))
+      plt.savefig('{}norm_cashflow_{}-{}'.format(self.output_folder, idx + 1, len(self.cashflows)))
+      plt.close()
+      print('[logplotter -> {}norm_cashflow_{}-{}]'.format(self.output_folder, idx + 1, len(self.cashflows)))
 
   def plot_fold_loss(self):
     players = set()
@@ -82,6 +97,7 @@ class LogfileCollector:
     plt.ylabel('loss')
     plt.savefig('{}folding_losses'.format(self.output_folder))
     plt.close()
+    print('[logplotter -> {}folding_losses]'.format(self.output_folder))
 
   def load_n_most_recent_logfiles(self, n):
     file_names = [self.root_path + fn for fn in listdir(self.root_path) if
@@ -169,7 +185,7 @@ class LogfileCollector:
 
 
 if __name__ == '__main__':
-  RELEVANT_LOGFILES = 100
+  RELEVANT_LOGFILES = 1
   OUTPUT_FOLDER = 'plots/'
 
   logfile_collector = LogfileCollector(OUTPUT_FOLDER)
