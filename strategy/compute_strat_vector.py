@@ -14,16 +14,19 @@ def generate_cards(N_PLAYERS, BATCH_SIZE):
   hole_cards = np.reshape(cards[:, 5:5 + 2 * N_PLAYERS], (BATCH_SIZE, N_PLAYERS, 2))
   return community_cards, hole_cards
 
-def compute_strat_vector(agent, agent_name):
+def compute_strat_vector(agent, agent_name, verbose=False):
   # Mutable
   N_CARD_PERCENTILE_BINS = 10
-  N_TOTAL_POT_BINS = 8
+  # TODO: FIXME: Total pots aren't filled up equally, and some combinations are logically impossible (eg. own_pot > total_pot)
+  # This leads to large parts of the strategy matrix not being filled out
+  # N_TOTAL_POT_BINS = 1
+  # N_TOTAL_POT_BINS = 8
   N_OWN_POT_SIZE_BINS = 6
   N_MIN_SAMPLES_PER_BIN = 25
   BATCH_SIZE = 10000
   INITIAL_CAPITAL = 200
   MIN_RAISE = 4
-  ACTION_SPACE_BINS = INITIAL_CAPITAL // 4 + 1
+  ACTION_SPACE_BINS = INITIAL_CAPITAL // 4 + 3
 
   # Fixed
   N_ROUNDS = 4
@@ -36,24 +39,24 @@ def compute_strat_vector(agent, agent_name):
   n_games = np.zeros((
     N_SEATING_POSITIONS,
     N_ROUNDS,
-    N_MAX_ACTIVE_PLAYERS,
+    N_MAX_ACTIVE_PLAYERS - 2,
     N_OWN_POT_SIZE_BINS,
-    N_TOTAL_POT_BINS,
+    # N_TOTAL_POT_BINS,
     N_CARD_PERCENTILE_BINS
   ))
   strategy = np.zeros((
     N_SEATING_POSITIONS,
     N_ROUNDS,
-    N_MAX_ACTIVE_PLAYERS,
+    N_MAX_ACTIVE_PLAYERS - 2,
     N_OWN_POT_SIZE_BINS,
-    N_TOTAL_POT_BINS,
+    # N_TOTAL_POT_BINS,
     N_CARD_PERCENTILE_BINS,
     ACTION_SPACE_BINS
   ))
 
   agent.initialize(BATCH_SIZE, INITIAL_CAPITAL, N_PLAYERS_TOTAL)
 
-  print("Generating strategy vector for {0} in {1}-dimensional space..".format(agent_name, n_games.size))
+  if verbose: print("Generating strategy vector for {0} in {1}-dimensional space..".format(agent_name, n_games.size))
 
   ranktable = np.stack((
     np.load(os.path.join(path_root, "5card_rank_percentile.npy")),
@@ -67,10 +70,11 @@ def compute_strat_vector(agent, agent_name):
 
   lowest_bin_count = np.amin(n_games)
   while lowest_bin_count <= N_MIN_SAMPLES_PER_BIN:
-    print("Starting filling round")
-    print("\tLowest number currently:", lowest_bin_count)
-    print("\tNumber of bins at lowest:", np.count_nonzero(n_games == lowest_bin_count))
-    print("\tAverage bin count:", np.mean(n_games))
+    if verbose:
+      print("Starting filling round")
+      print("\tLowest number currently:", lowest_bin_count)
+      print("\tNumber of bins at lowest:", np.count_nonzero(n_games == lowest_bin_count))
+      print("\tAverage bin count:", np.mean(n_games))
     for round in range(0, N_ROUNDS):
       n_community_cards = [0, 3, 4, 5][round]
       for seating_position in range(N_SEATING_POSITIONS):
@@ -170,23 +174,28 @@ def compute_strat_vector(agent, agent_name):
             # print("Amount", amounts[5])
             # input()
 
-            amounts[actions == constants.CALL] = MIN_RAISE
-            amounts[np.logical_and(actions == constants.CALL, last_raiser == seating_position)] = 0
-            action_bins = np.floor(amounts * ACTION_SPACE_BINS / (INITIAL_CAPITAL+1)).astype(int)
+            action_bins = 3 + np.floor(amounts * (ACTION_SPACE_BINS - 3) / (INITIAL_CAPITAL+1)).astype(int)
             action_bins[actions == constants.FOLD] = 0
+            action_bins[actions == constants.CALL] = 1
+            action_bins[np.logical_and(actions == constants.CALL, last_raiser == seating_position)] = 2
 
-            total_pot_idx = np.floor(np.sum(current_bets + prev_round_investment, axis=1) * N_TOTAL_POT_BINS / N_PLAYERS_TOTAL / (INITIAL_CAPITAL + 1)).astype(int)
+            # total_pot_idx = np.floor(np.sum(current_bets + prev_round_investment, axis=1) * N_TOTAL_POT_BINS / N_PLAYERS_TOTAL / (INITIAL_CAPITAL + 1)).astype(int)
 
             for k in range(N_CARD_PERCENTILE_BINS):
-              n_games[seating_position, round, n_active_players, own_pot_idx, total_pot_idx, k] += np.count_nonzero(rank_bin == k)
-              strategy[seating_position, round, n_active_players, own_pot_idx, total_pot_idx, k, action_bins] += np.count_nonzero(rank_bin == k)
+              # n_games[seating_position, round, n_active_players - 2, own_pot_idx, total_pot_idx, k] += np.count_nonzero(rank_bin == k)
+              # strategy[seating_position, round, n_active_players - 2, own_pot_idx, total_pot_idx, k, action_bins] += np.count_nonzero(rank_bin == k)
+              n_games[seating_position, round, n_active_players - 2, own_pot_idx, k] += np.count_nonzero(rank_bin == k)
+              strategy[seating_position, round, n_active_players - 2, own_pot_idx, k, action_bins] += np.count_nonzero(rank_bin == k)
 
     lowest_bin_count = np.amin(n_games)
 
-  print("Strategy vector for {0} finished, min {1}, max {2} games.".format(agent_name, np.amin(n_games), np.amax(n_games)))
-  print("Saving..")
+  if verbose:
+    print("Strategy vector for {0} finished, min {1}, max {2} games.".format(agent_name, np.amin(n_games), np.amax(n_games)))
+    print("Saving..")
   os.makedirs(os.path.join(path_root, "strat_vectors"), exist_ok=True)
   np.save(os.path.join(path_root, "strat_vectors", agent_name+"_strategy.npy"), strategy)
-  print("Saved.")
+  # np.save(os.path.join(path_root, "strat_vectors", agent_name+"_ngames.npy"), n_games)
+  if verbose:
+    print("Saved.")
 
-  return strategy
+  return strategy, n_games
