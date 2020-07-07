@@ -177,15 +177,19 @@ def compute_strat_vector(agent, agent_name, verbose=False):
             action_bins = 3 + np.floor(amounts * (ACTION_SPACE_BINS - 3) / (INITIAL_CAPITAL+1)).astype(int)
             action_bins[actions == constants.FOLD] = 0
             action_bins[actions == constants.CALL] = 1
-            action_bins[np.logical_and(actions == constants.CALL, last_raiser == seating_position)] = 2
+            action_bins[np.logical_and(actions == constants.CALL, current_bets.sum(axis=1) == 0)] = 2
 
             # total_pot_idx = np.floor(np.sum(current_bets + prev_round_investment, axis=1) * N_TOTAL_POT_BINS / N_PLAYERS_TOTAL / (INITIAL_CAPITAL + 1)).astype(int)
 
-            for k in range(N_CARD_PERCENTILE_BINS):
-              # n_games[seating_position, round, n_active_players - 2, own_pot_idx, total_pot_idx, k] += np.count_nonzero(rank_bin == k)
-              # strategy[seating_position, round, n_active_players - 2, own_pot_idx, total_pot_idx, k, action_bins] += np.count_nonzero(rank_bin == k)
-              n_games[seating_position, round, n_active_players - 2, own_pot_idx, k] += np.count_nonzero(rank_bin == k)
-              strategy[seating_position, round, n_active_players - 2, own_pot_idx, k, action_bins] += np.count_nonzero(rank_bin == k)
+            for card_rank in range(N_CARD_PERCENTILE_BINS):
+              n_games[seating_position, round, n_active_players - 2, own_pot_idx, card_rank] += np.count_nonzero(
+                rank_bin == card_rank
+              )
+              for action in range(ACTION_SPACE_BINS):
+                strategy[
+                  seating_position, round, n_active_players - 2, own_pot_idx, card_rank, action
+                ] += np.count_nonzero(np.logical_and(rank_bin == card_rank, action_bins == action))
+
 
     lowest_bin_count = np.amin(n_games)
 

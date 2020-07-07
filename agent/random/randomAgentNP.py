@@ -16,7 +16,7 @@ class RandomAgentNP(BaseAgentNP):
           hole_cards, community_cards):
     actions = self.rng.randint(0, 3, min_raise.size).astype(int)
 
-    max_raise = 200 - current_bets[:, player_idx] + prev_round_investment[:, player_idx]
+    max_raise = 200 - current_bets[:, player_idx] - prev_round_investment[:, player_idx]
 
     amounts = (self.rng.rand(min_raise.size) * (max_raise - min_raise) + min_raise).astype(int)
     return actions, amounts
