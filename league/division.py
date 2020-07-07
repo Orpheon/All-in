@@ -110,7 +110,7 @@ class OverfitDivision(Division):
     self.state['is_learning'] = False
 
   def get_best_agent(self):
-    return self.leaderboard.get_rankings()[0][0]
+    return self.leaderboard.get_all_rankings()[0][0]
 
 
 class PermaEvalChoiceDivision(Division):
@@ -151,7 +151,8 @@ class PermaEvalSampleDivision(Division):
     random_agents = random.sample(all_Teachers, k=5)
     agents_sorted_by_usage = sorted([(agent_id, self.state['n_rounds_played'].get(agent_id, 0))
                                      for agent_id in all_Teachers], key=lambda x: x[1])
-    agents_sorted_by_usage_filtered = [(agent_id, nrp) for agent_id, nrp in agents_sorted_by_usage if agent_id not in random_agents]
+    agents_sorted_by_usage_filtered = [(agent_id, nrp) for agent_id, nrp in agents_sorted_by_usage if
+                                       agent_id not in random_agents]
 
     if len(agents_sorted_by_usage_filtered) == 0:
       least_used_agent = agents_sorted_by_usage[0]
@@ -169,3 +170,40 @@ class PermaEvalSampleDivision(Division):
   def load(self):
     super().load()
     assert self.state['type'] == 'PermaEvalSampleDivision'
+
+
+class PermaEvalSimilarDivision(Division):
+  RANK_RADIUS = 5
+
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+    self.state = {'type': 'PermaEvalSimilarDivision', 'n_rounds_played': {}}
+
+  def _generate_matchup(self):
+    all_Teachers = [id for id in self.agent_manager.agents if not self.agent_manager.get_info(id).TRAINABLE]
+    teachers_by_ts = [(agent_id, self.leaderboard.get_ranking(agent_id)[0]) for agent_id in all_Teachers]
+    teachers_sorted_by_ts = list(enumerate(sorted(teachers_by_ts, key=lambda x: x[1])))
+    origin = random.choice(teachers_sorted_by_ts)
+    origin_agent_id = origin[1][0]
+    origin_idx = origin[0]
+
+    top = teachers_sorted_by_ts[origin_idx + 1:origin_idx + 1 + self.RANK_RADIUS]
+    bottom = teachers_sorted_by_ts[max(0, origin_idx - self.RANK_RADIUS):origin_idx]
+
+    if len(top) + len(bottom) < 5:
+      similar_competition = random.choice(top + bottom, 5)
+    else:
+      similar_competition = random.sample(top + bottom, 5)
+    origin_neighbors = [on[1][0] for on in similar_competition]
+
+    matchup_ids = [origin_agent_id, *origin_neighbors]
+    random.shuffle(matchup_ids)
+
+    for id in matchup_ids:
+      self.state['n_rounds_played'][id] = self.state['n_rounds_played'].get(id, 0) + 1
+
+    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+
+  def load(self):
+    super().load()
+    assert self.state['type'] == 'PermaEvalSimilarDivision'
