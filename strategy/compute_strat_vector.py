@@ -14,7 +14,7 @@ def generate_cards(N_PLAYERS, BATCH_SIZE):
   hole_cards = np.reshape(cards[:, 5:5 + 2 * N_PLAYERS], (BATCH_SIZE, N_PLAYERS, 2))
   return community_cards, hole_cards
 
-def compute_strat_vector(agent, agent_name, verbose=False):
+def compute_strat_vector(agent, verbose=False):
   # Mutable
   N_CARD_PERCENTILE_BINS = 10
   # TODO: FIXME: Total pots aren't filled up equally, and some combinations are logically impossible (eg. own_pot > total_pot)
@@ -55,8 +55,6 @@ def compute_strat_vector(agent, agent_name, verbose=False):
   ))
 
   agent.initialize(BATCH_SIZE, INITIAL_CAPITAL, N_PLAYERS_TOTAL)
-
-  if verbose: print("Generating strategy vector for {0} in {1}-dimensional space..".format(agent_name, n_games.size))
 
   ranktable = np.stack((
     np.load(os.path.join(path_root, "5card_rank_percentile.npy")),
@@ -188,18 +186,12 @@ def compute_strat_vector(agent, agent_name, verbose=False):
               for action in range(ACTION_SPACE_BINS):
                 strategy[
                   seating_position, round, n_active_players - 2, own_pot_idx, card_rank, action
-                ] += np.count_nonzero(np.logical_and(rank_bin == card_rank, action_bins == action))
+                ] += np.count_nonzero(action_bins[rank_bin == card_rank] == action)
 
 
     lowest_bin_count = np.amin(n_games)
 
   if verbose:
-    print("Strategy vector for {0} finished, min {1}, max {2} games.".format(agent_name, np.amin(n_games), np.amax(n_games)))
-    print("Saving..")
-  os.makedirs(os.path.join(path_root, "strat_vectors"), exist_ok=True)
-  np.save(os.path.join(path_root, "strat_vectors", agent_name+"_strategy.npy"), strategy)
-  # np.save(os.path.join(path_root, "strat_vectors", agent_name+"_ngames.npy"), n_games)
-  if verbose:
-    print("Saved.")
+    print("Strategy vector finished, min {0}, max {1} games.".format(np.amin(n_games), np.amax(n_games)))
 
   return strategy, n_games

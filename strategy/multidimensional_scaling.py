@@ -2,20 +2,21 @@ import numpy as np
 import constants
 import sklearn.manifold
 
-def distance(strategy1, strategy2):
-  shape = strategy1.shape
+def condense(strategy):
+  shape = strategy.shape
   bins = shape[-1] - 3
   call_idx = int(4 / 200 * bins)
-
-  strat1_condensed = strategy1[..., constants.CHECK:]
-  strat1_condensed[..., constants.CHECK] = strategy1[..., constants.FOLD] + strategy1[..., constants.CHECK]
-  strat1_condensed[..., call_idx] += strategy1[..., constants.CALL]
-  strat1_condensed /= np.sum(strat1_condensed)
   
-  strat2_condensed = strategy2[..., constants.CHECK:]
-  strat2_condensed[..., constants.CHECK] = strategy2[..., constants.FOLD] + strategy2[..., constants.CHECK]
-  strat2_condensed[..., call_idx] += strategy2[..., constants.CALL]
-  strat2_condensed /= np.sum(strat2_condensed)
+  strat_condensed = strategy[..., constants.CHECK:]
+  strat_condensed[..., constants.CHECK] = strategy[..., constants.FOLD] + strategy[..., constants.CHECK]
+  strat_condensed[..., call_idx] += strategy[..., constants.CALL]
+  strat_condensed /= np.sum(strat_condensed)
+
+  return strat_condensed
+
+def distance(strategy1, strategy2):
+  strat1_condensed = condense(strategy1)
+  strat2_condensed = condense(strategy2)
 
   bhattacharyya_coeff = np.sqrt(strat1_condensed * strat2_condensed).sum()
   if bhattacharyya_coeff == 0:
@@ -23,7 +24,7 @@ def distance(strategy1, strategy2):
 
   return -np.log(bhattacharyya_coeff)
 
-def compute_mds(strategies):
+def compute_mds(strategies, verbose=True):
   # Build distance matrix first
   strategy_tuples = list(strategies.items())
   dist_matrix = np.zeros((len(strategies), len(strategies)))
@@ -39,7 +40,7 @@ def compute_mds(strategies):
       dist_matrix[idx1, idx2] = dist
       dist_matrix[idx2, idx1] = dist
     dist_matrix[idx1, idx1] = 0
-    print("{}%".format(round(100 * idx1 / len(strategy_tuples), 2)))
+    print("MDS: {}%".format(round(100 * idx1 / len(strategy_tuples), 2)))
 
   mds = sklearn.manifold.MDS(
     n_components=2,

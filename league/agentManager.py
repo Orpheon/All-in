@@ -1,6 +1,7 @@
 import json
 from collections import namedtuple
 import numpy as np
+import os
 
 from agent.qlearn2.qlearn2AgentNP import Qlearn2AgentNP
 from agent.qlearn3.qlearn3AgentNP import Qlearn3AgentNP
@@ -9,6 +10,7 @@ from agent.call.callAgentNP import CallAgentNP
 from agent.qlearn1.qlearn1AgentNP import Qlearn1AgentNP
 from agent.sac1.sac1AgentNP import Sac1AgentNP
 from agent.sac2.sac2AgentNP import Sac2AgentNP
+from strategy.compute_strat_vector import compute_strat_vector
 
 AGENT_TYPES = {'qlearn1': Qlearn1AgentNP,
                'qlearn2': Qlearn2AgentNP,
@@ -68,5 +70,20 @@ class AgentManager:
       return new_id
     return None
 
-  def get_all_static_agent_ids(self):
-    return [id for id,agent in self.agents.items() if not agent.TRAINABLE]
+  def get_all_agents(self):
+    return self.agents.items()
+
+  def get_all_agent_types(self):
+    return set(info.AGENT_TYPE for _,info in self.agents.items())
+
+  def get_strategy_vector(self, id):
+    root = os.path.join("strategy", "strat_vectors")
+    path = os.path.join(root, id+"_strategy.npy")
+    if os.path.exists(path):
+      return np.load(path)
+    else:
+      print("Strategy vector of", id, "does not yet exist, computing.. (this may take a few minutes)")
+      strategy, _ = compute_strat_vector(self.get_instance(id, overwrite_not_trainable=True))
+      os.makedirs(root, exist_ok=True)
+      np.save(path, strategy)
+      return strategy
