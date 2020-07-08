@@ -15,7 +15,7 @@ class Leaderboard:
 
   def __init__(self, file_path):
     self.FILE_PATH = file_path
-    self.changed = False
+    self.changed = True
 
   def load(self):
     with open(self.FILE_PATH, 'r') as f:
@@ -34,7 +34,7 @@ class Leaderboard:
     self.changed = False
 
 
-class LeaderboardTS(Leaderboard):
+class LeaderboardTrueskill(Leaderboard):
 
   def __init__(self, file_path):
     super().__init__(file_path)
@@ -110,7 +110,7 @@ class LeaderboardTS(Leaderboard):
     print(output)
 
 
-class LeaderboardPL(Leaderboard):
+class LeaderboardPlacingMatrix(Leaderboard):
 
   def __init__(self, file_path):
     super().__init__(file_path)
@@ -162,39 +162,43 @@ class LeaderboardPL(Leaderboard):
     plt.ylabel('opponent')
     plt.show()
 
-  def print_leaderboard(self):
-    agent_ids = self._ratings['agent_ids']
+  def print_leaderboard(self, agent_manager: AgentManager):
+    agent_ids = [(agent_id, agent_manager.get_info(agent_id).AGENT_NAME) for agent_id in self._ratings['agent_ids']]
     current = self._ratings['current']
 
     ids_with_avg_rank = (
       (i,
+       n,
        sum(current[i].values()) / len(current[i].values()),
        np.median(list(current[i].values())),
        np.percentile(list(current[i].values()), 80))
-      for i in agent_ids)
+      for i, n in agent_ids)
     ids_sorted_by_avg_rank = sorted(ids_with_avg_rank, key=lambda x: x[3])
 
-    print('{:>3}: {:<8} {:<5} {:<5} {:<5}'.format(' ', 'agent_id', 'avg', 'med', '80pctl'))
-    output = "\n".join('{:>3}: {:<8} {:<5.2f} {:<5.2f} {:<5.2f}'.format(idx + 1, agent_id, avg_rank, median_rank, pctl)
-                       for idx, (agent_id, avg_rank, median_rank, pctl) in enumerate(ids_sorted_by_avg_rank))
+    print('{:>3}: {:<20} {:<5} {:<5} {:<5}'.format(' ', 'agent_id', 'avg', 'med', '80pctl'))
+    output = "\n".join(
+      '{:>3}: {:<20} {:<5.2f} {:<5.2f} {:<5.2f}'.format(idx + 1, agent_id, agent_name, avg_rank, median_rank, pctl)
+      for idx, (agent_id, agent_name, avg_rank, median_rank, pctl) in enumerate(ids_sorted_by_avg_rank))
     print(output)
 
 
 if __name__ == '__main__':
-  lpl = LeaderboardPL('../savefiles/leaderboard_matrix.json')
+  agent_manager = AgentManager(file_path='../savefiles/agent_manager.json',
+                               models_path=None,
+                               possible_agent_names=None)
+
+  lpl = LeaderboardPlacingMatrix(file_path='../savefiles/leaderboards/34.json')
   lpl.load()
   lpl.plot_matrix()
-  lpl.print_leaderboard()
+  lpl.print_leaderboard(agent_manager)
 
-  agent_manager = AgentManager('../savefiles/agent_manager.json', None)
   agent_manager.load()
 
-  relevant_leaderboards = [
-    'perma_eval_similar']  # + ['perma_eval_choice', 'perma_eval_sample'] + ['random_{}'.format(i) for i in range(7,8)]
+  relevant_leaderboards = ['17', '73', '78', '25', '69', '82', '77']
 
   for l in relevant_leaderboards:
     # select leaderboard to watch
-    leaderboard = LeaderboardTS('../savefiles/leaderboard_{}.json'.format(l))
+    leaderboard = LeaderboardTrueskill(file_path='../savefiles/leaderboard_{}.json'.format(l))
     leaderboard.load()
 
     ratings = [r[0] for r in leaderboard._ratings['current'].values()]

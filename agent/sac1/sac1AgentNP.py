@@ -24,10 +24,6 @@ class Sac1AgentNP(BaseAgentNP):
   MODEL_FILES = ['policy.modelb', 'q1.modelb', 'q2.modelb']
   logger = EpochLogger(output_dir='sac1/logs', output_fname='progress.csv')
 
-  def __str__(self):
-    return 'Sac1 {} {}'.format('T' if self.trainable else 'N', super().__str__())
-
-
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
     self.REPLAY_BATCH_SIZE = 1000
@@ -41,9 +37,9 @@ class Sac1AgentNP(BaseAgentNP):
     # Action dimensions
     self.act_dim = 4
 
-    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.trainable, device=DEVICE)
+    self.ac = models.MLPActorCritic(self.obs_dim, self.act_dim, 1, trainable=self.TRAINABLE, device=DEVICE)
 
-    if self.trainable:
+    if self.TRAINABLE:
       self.target_ac = deepcopy(self.ac)
       for parameter in self.target_ac.parameters():
         parameter.requires_grad = False
@@ -71,9 +67,9 @@ class Sac1AgentNP(BaseAgentNP):
     community_cards[:, 0:3].sort(axis=1)
 
     network_output = self.ac.act(torch.as_tensor(state, dtype=torch.float32),
-                                 deterministic=not self.trainable)
+                                 deterministic=not self.TRAINABLE)
 
-    if self.trainable:
+    if self.TRAINABLE:
       if not self.first_round:
         n_rounds = active_games.sum()
         self.replaybuffer.store(obs=self.prev_state[active_games],
@@ -97,7 +93,7 @@ class Sac1AgentNP(BaseAgentNP):
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                      hole_cards, community_cards, gains):
     #TODO: bugfix to prevent crash in case that agent never acted before game finish
-    if self.trainable and self.prev_state is not None:
+    if self.TRAINABLE and self.prev_state is not None:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
       scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS / 2 - 1)) * 2 / self.N_PLAYERS
@@ -288,15 +284,15 @@ class Sac1AgentNP(BaseAgentNP):
         p_targ.data.add_((1 - POLYAK) * p.data)
 
   def load_model(self):
-    if os.path.exists(self.model_path):
-      self.ac.load(self.model_path)
-      if self.trainable:
-        self.pi_optimizer.load_state_dict(torch.load(os.path.join(self.model_path, 'pi_opt.optb')))
-        self.q_optimizer.load_state_dict(torch.load(os.path.join(self.model_path, 'q_opt.optb')))
+    if os.path.exists(self.MODEL_PATH):
+      self.ac.load(self.MODEL_PATH)
+      if self.TRAINABLE:
+        self.pi_optimizer.load_state_dict(torch.load(os.path.join(self.MODEL_PATH, 'pi_opt.optb')))
+        self.q_optimizer.load_state_dict(torch.load(os.path.join(self.MODEL_PATH, 'q_opt.optb')))
 
   def save_model(self):
-    print('saved', self.model_path)
-    self.ac.save(self.model_path)
-    if self.trainable:
-      torch.save(self.pi_optimizer.state_dict(), os.path.join(self.model_path, 'pi_opt.optb'))
-      torch.save(self.q_optimizer.state_dict(), os.path.join(self.model_path, 'q_opt.optb'))
+    print('saved', self.MODEL_PATH)
+    self.ac.save(self.MODEL_PATH)
+    if self.TRAINABLE:
+      torch.save(self.pi_optimizer.state_dict(), os.path.join(self.MODEL_PATH, 'pi_opt.optb'))
+      torch.save(self.q_optimizer.state_dict(), os.path.join(self.MODEL_PATH, 'q_opt.optb'))

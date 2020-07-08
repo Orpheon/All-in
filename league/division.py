@@ -8,19 +8,20 @@ from league.agentManager import AgentManager
 
 class Division:
 
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager):
-    self.file_path = file_path
-    self.game_engine = game_engine
-    self.leaderboard = leaderboard
-    self.agent_manager = agent_manager
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager, division_id):
+    self.FILE_PATH = file_path
+    self.GAME_ENGINE = game_engine
+    self.LEADERBOARD = leaderboard
+    self.AGENT_MANAGER = agent_manager
+    self.DIVISION_ID = division_id
 
   def run_next(self):
     matchup, ids = self._generate_matchup()
     placings = self._run_games(matchup, ids)
-    self.leaderboard.update_from_placings(placings)
+    self.LEADERBOARD.update_from_placings(placings)
 
   def _run_games(self, agent_types, agent_ids):
-    total_winnings = self.game_engine.run_game(agent_types)
+    total_winnings = self.GAME_ENGINE.run_game(agent_types)
     winnings = np.sum(total_winnings, axis=0) / total_winnings.shape[0]
 
     wins_dict = {aid: (m, []) for aid, m in zip(agent_ids, agent_types)}
@@ -40,24 +41,27 @@ class Division:
     raise NotImplementedError('League _generate_matchup not implemented')
 
   def load(self):
-    with open(self.file_path, 'r') as f:
+    with open(self.FILE_PATH, 'r') as f:
       data = json.load(f)
     self.state = data
-    print('[League <- {}]: loaded '.format(self.file_path))
+    print('[Division <- {}]: load {}'
+          .format(self.FILE_PATH, ' '.join('| {}: {}'.format(key, len(val) if key != 'type' else val)
+                                           for key, val in self.state.items())))
 
   def save(self):
-    with open(self.file_path, 'w') as f:
+    with open(self.FILE_PATH, 'w') as f:
       json.dump(self.state, f, sort_keys=True, indent=2)
-    print('[League -> {}]: saved'.format(self.file_path))
+    print('[Division -> {}]: save {}'
+          .format(self.FILE_PATH, ' '.join('| {}: {}'.format(key, len(val) if key != 'type' else val)
+                                           for key, val in self.state.items())))
 
   def clone_mutables(self):
-    raise NotImplementedError('League clone_mutables not implemented')
-
+    pass
 
 class RandomDivision(Division):
 
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager, division_id):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
     self.state = {'type': 'RandomDivision', 'teachers': [], 'students': []}
 
   def _generate_matchup(self):
@@ -65,7 +69,7 @@ class RandomDivision(Division):
     teachers = random.choices(self.state['teachers'], k=5)
     matchup_ids = [student, *teachers]
     random.shuffle(matchup_ids)
-    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+    return [self.AGENT_MANAGER.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
 
   def load(self):
     super().load()
@@ -73,13 +77,13 @@ class RandomDivision(Division):
 
   def clone_mutables(self):
     for agent_id in self.state['students']:
-      new_id = self.agent_manager.clone(agent_id)
+      new_id = self.AGENT_MANAGER.clone(agent_id, self.DIVISION_ID)
       self.state['teachers'].append(new_id)
 
 
 class OverfitDivision(Division):
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
     self.state = {'type': 'RandomDivision', 'teacher': None, 'students': [], 'alumni': [], 'is_learning': True}
 
   def _generate_matchup(self):
@@ -92,7 +96,7 @@ class OverfitDivision(Division):
 
     matchup_ids = [student, *teachers]
     random.shuffle(matchup_ids)
-    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+    return [self.AGENT_MANAGER.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
 
   def load(self):
     super().load()
@@ -105,21 +109,21 @@ class OverfitDivision(Division):
   def set_assessing(self):
     self.state['alumni'] = []
     for s in self.state['students']:
-      new_id = self.agent_manager.clone(s)
+      new_id = self.AGENT_MANAGER.clone(s)
       self.state['alumin'].append(new_id)
     self.state['is_learning'] = False
 
   def get_best_agent(self):
-    return self.leaderboard.get_all_rankings()[0][0]
+    return self.LEADERBOARD.get_all_rankings()[0][0]
 
 
 class PermaEvalChoiceDivision(Division):
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
     self.state = {'type': 'PermaEvalChoiceDivision', 'n_rounds_played': {}}
 
   def _generate_matchup(self):
-    all_Teachers = [id for id in self.agent_manager.agents if not self.agent_manager.get_info(id).TRAINABLE]
+    all_Teachers = [id for id in self.AGENT_MANAGER.agents if not self.AGENT_MANAGER.get_info(id).TRAINABLE]
 
     random_agents = random.sample(all_Teachers, k=5)
     agents_sorted_by_usage = sorted([(agent_id, self.state['n_rounds_played'].get(agent_id, 0))
@@ -133,7 +137,7 @@ class PermaEvalChoiceDivision(Division):
     for id in matchup_ids:
       self.state['n_rounds_played'][id] = self.state['n_rounds_played'].get(id, 0) + 1
 
-    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+    return [self.AGENT_MANAGER.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
 
   def load(self):
     super().load()
@@ -141,12 +145,12 @@ class PermaEvalChoiceDivision(Division):
 
 
 class PermaEvalSampleDivision(Division):
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
     self.state = {'type': 'PermaEvalSampleDivision', 'n_rounds_played': {}}
 
   def _generate_matchup(self):
-    all_Teachers = [id for id in self.agent_manager.agents if not self.agent_manager.get_info(id).TRAINABLE]
+    all_Teachers = [id for id in self.AGENT_MANAGER.agents if not self.AGENT_MANAGER.get_info(id).TRAINABLE]
 
     random_agents = random.sample(all_Teachers, k=5)
     agents_sorted_by_usage = sorted([(agent_id, self.state['n_rounds_played'].get(agent_id, 0))
@@ -165,7 +169,7 @@ class PermaEvalSampleDivision(Division):
     for id in matchup_ids:
       self.state['n_rounds_played'][id] = self.state['n_rounds_played'].get(id, 0) + 1
 
-    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+    return [self.AGENT_MANAGER.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
 
   def load(self):
     super().load()
@@ -175,13 +179,13 @@ class PermaEvalSampleDivision(Division):
 class PermaEvalSimilarDivision(Division):
   RANK_RADIUS = 5
 
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager)
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
     self.state = {'type': 'PermaEvalSimilarDivision', 'n_rounds_played': {}}
 
   def _generate_matchup(self):
-    all_Teachers = [id for id in self.agent_manager.agents if not self.agent_manager.get_info(id).TRAINABLE]
-    teachers_by_ts = [(agent_id, self.leaderboard.get_ranking(agent_id)[0]) for agent_id in all_Teachers]
+    all_Teachers = [id for id in self.AGENT_MANAGER.agents if not self.AGENT_MANAGER.get_info(id).TRAINABLE]
+    teachers_by_ts = [(agent_id, self.LEADERBOARD.get_ranking(agent_id)[0]) for agent_id in all_Teachers]
     teachers_sorted_by_ts = list(enumerate(sorted(teachers_by_ts, key=lambda x: x[1])))
     origin = random.choice(teachers_sorted_by_ts)
     origin_agent_id = origin[1][0]
@@ -202,8 +206,61 @@ class PermaEvalSimilarDivision(Division):
     for id in matchup_ids:
       self.state['n_rounds_played'][id] = self.state['n_rounds_played'].get(id, 0) + 1
 
-    return [self.agent_manager.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+    return [self.AGENT_MANAGER.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
 
   def load(self):
     super().load()
     assert self.state['type'] == 'PermaEvalSimilarDivision'
+
+
+class ClimbingDivision(Division):
+  P_TRAINING = 0.8
+  RANK_RADIUS = 5
+
+  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
+    self.state = {'type': 'ClimbingDivision', 'students': [], 'teachers': []}
+
+  def _generate_matchup(self):
+    teachers_by_ts = [(agent_id, self.LEADERBOARD.get_ranking(agent_id)[0]) for agent_id in self.state['teachers']]
+
+    if random.random() <= self.P_TRAINING:
+      student = random.choice(self.state['students'])
+
+      sum_ts = sum([ts ** 2 for _, ts in teachers_by_ts])
+      p = [ts ** 2 / sum_ts for _, ts in teachers_by_ts]
+
+      teachers = []
+      for i in range(5):
+        teachers.append(np.random.choice(self.state['teachers'], p=p))
+      matchup_ids = [student, *teachers]
+
+    else:
+      teachers_sorted_by_ts = list(enumerate(sorted(teachers_by_ts, key=lambda x: x[1])))
+      origin = random.choice(teachers_sorted_by_ts)
+      origin_agent_id = origin[1][0]
+      origin_idx = origin[0]
+
+      top = teachers_sorted_by_ts[origin_idx + 1:origin_idx + 1 + self.RANK_RADIUS]
+      bottom = teachers_sorted_by_ts[max(0, origin_idx - self.RANK_RADIUS):origin_idx]
+
+      n_neighbors = 5
+
+      if len(top) + len(bottom) < n_neighbors:
+        similar_competition = random.choices(top + bottom, k=n_neighbors)
+      else:
+        similar_competition = random.sample(top + bottom, k=n_neighbors)
+      origin_neighbors = [on[1][0] for on in similar_competition]
+      matchup_ids = [origin_agent_id, *origin_neighbors]
+
+    random.shuffle(matchup_ids)
+    return [self.AGENT_MANAGER.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
+
+  def load(self):
+    super().load()
+    assert self.state['type'] == 'ClimbingDivision'
+
+  def clone_mutables(self):
+    for agent_id in self.state['students']:
+      new_id = self.AGENT_MANAGER.clone(agent_id, self.DIVISION_ID)
+      self.state['teachers'].append(new_id)
