@@ -24,9 +24,6 @@ class Qlearn3AgentNP(BaseAgentNP):
     super().__init__(trainable, model_path)
     self.acted = 0
 
-  def __str__(self):
-    return 'Qln3 {} {}'.format('T' if self.trainable else 'N', super().__str__())
-
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
     self.INITAL_CAPITAL = initial_capital
@@ -38,12 +35,12 @@ class Qlearn3AgentNP(BaseAgentNP):
     self.obs_dim = (5) * 53 + (2) * 52 + (1 + 1 + 1 + 1 + 1) * 6 + (1) * 5
     self.act_dim = 5
 
-    self.q = models.MLPQFunction(self.obs_dim, self.act_dim, trainable=self.trainable, device=DEVICE)
+    self.q = models.MLPQFunction(self.obs_dim, self.act_dim, trainable=self.TRAINABLE, device=DEVICE)
 
     self.possible_actions = torch.zeros((self.BATCH_SIZE, self.act_dim), device=DEVICE)
     self.possible_raises = np.array([0, 0, 4, 20, 200])
 
-    if self.trainable:
+    if self.TRAINABLE:
       self.reward = torch.zeros(self.BATCH_SIZE)
       self.replaybuffer = replaybuffer.ReplayBuffer(obs_dim=self.obs_dim,
                                                     act_dim=self.act_dim,
@@ -71,7 +68,7 @@ class Qlearn3AgentNP(BaseAgentNP):
       current_bets, prev_round_investment[:, player_idx] + current_bets[:, player_idx]
     )
 
-    if self.trainable:
+    if self.TRAINABLE:
       if not self.first_round:
         self.replaybuffer.store(obs=self.prev_state,
                                 act=self.prev_action,
@@ -88,7 +85,7 @@ class Qlearn3AgentNP(BaseAgentNP):
   def end_trajectory(self, player_idx, round, current_bets, min_raise, prev_round_investment, folded, last_raiser,
                      hole_cards, community_cards, gains):
     # TODO: bugfix to prevent crash in case that agent never acted before game finish
-    if self.trainable and self.prev_state is not None:
+    if self.TRAINABLE and self.prev_state is not None:
       state = self.build_network_input(player_idx, round, current_bets, min_raise, prev_round_investment, folded,
                                        last_raiser, hole_cards, community_cards)
       scaled_gains = (gains / self.INITAL_CAPITAL - (self.N_PLAYERS / 2 - 1)) * 2 / self.N_PLAYERS
@@ -184,7 +181,7 @@ class Qlearn3AgentNP(BaseAgentNP):
 
       actions = np.argmax(scores, axis=1)
 
-    if self.trainable:
+    if self.TRAINABLE:
       dice = np.random.random(self.BATCH_SIZE)
       rand_actions = np.random.randint(1, self.act_dim, self.BATCH_SIZE)
       actions[dice <= NOISE_LEVEL] = rand_actions[dice <= NOISE_LEVEL]
@@ -228,13 +225,13 @@ class Qlearn3AgentNP(BaseAgentNP):
     self.logger.store(LossQ=loss_q.item(), **q_info)
 
   def load_model(self):
-    if os.path.exists(self.model_path):
-      self.q.load(self.model_path)
-      if self.trainable:
-        self.q_optimizer.load_state_dict(torch.load(os.path.join(self.model_path, 'q_opt.optb')))
+    if os.path.exists(self.MODEL_PATH):
+      self.q.load(self.MODEL_PATH)
+      if self.TRAINABLE:
+        self.q_optimizer.load_state_dict(torch.load(os.path.join(self.MODEL_PATH, 'q_opt.optb')))
 
   def save_model(self):
-    print('saved', self.model_path)
-    self.q.save(self.model_path)
-    if self.trainable:
-      torch.save(self.q_optimizer.state_dict(), os.path.join(self.model_path, 'q_opt.optb'))
+    print('saved', self.MODEL_PATH)
+    self.q.save(self.MODEL_PATH)
+    if self.TRAINABLE:
+      torch.save(self.q_optimizer.state_dict(), os.path.join(self.MODEL_PATH, 'q_opt.optb'))

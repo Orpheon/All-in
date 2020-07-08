@@ -5,17 +5,21 @@ import shutil
 class BaseAgentNP:
   MODEL_FILES = []
 
-  def __init__(self, trainable, model_path, agent_id):
-    self.trainable = trainable
-    self.model_path = model_path
-    self.agent_id = agent_id
+  def __init__(self, agent_type, model_path, trainable, agent_id, origin_league, agent_name):
+    self.AGENT_TYPE = agent_type
+    self.MODEL_PATH = model_path
+    self.TRAINABLE = trainable
+    self.AGENT_ID = agent_id
+    self.ORIGIN_LEAGUE = origin_league
+    self.AGENT_NAME = agent_name
 
   @classmethod
-  def get_instance(cls, trainable, model_path, agent_id):
-    return cls(trainable, model_path, agent_id)
+  def get_instance(cls, agent_type, model_path, trainable, agent_id, origin_league, agent_name):
+    return cls(agent_type, model_path, trainable, agent_id, origin_league, agent_name)
 
   def __str__(self):
-    return self.agent_id
+    return '{}-{}.{}{}-{}'.format(self.AGENT_TYPE, self.ORIGIN_LEAGUE, self.AGENT_ID, 'S' if self.TRAINABLE else 'T',
+                                  self.AGENT_NAME)
 
   def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
           hole_cards, community_cards):
@@ -38,7 +42,7 @@ class BaseAgentNP:
   def clone_to_path(self, new_path):
     os.makedirs(new_path, exist_ok=True)
     for file in self.MODEL_FILES:
-      src = os.path.join(self.model_path, file)
+      src = os.path.join(self.MODEL_PATH, file)
       dst = os.path.join(new_path, file)
       shutil.copyfile(src, dst)
 
