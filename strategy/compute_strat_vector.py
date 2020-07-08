@@ -17,10 +17,6 @@ def generate_cards(N_PLAYERS, BATCH_SIZE):
 def compute_strat_vector(agent, verbose=False):
   # Mutable
   N_CARD_PERCENTILE_BINS = 10
-  # TODO: FIXME: Total pots aren't filled up equally, and some combinations are logically impossible (eg. own_pot > total_pot)
-  # This leads to large parts of the strategy matrix not being filled out
-  # N_TOTAL_POT_BINS = 1
-  # N_TOTAL_POT_BINS = 8
   N_OWN_POT_SIZE_BINS = 6
   N_MIN_SAMPLES_PER_BIN = 25
   BATCH_SIZE = 10000
@@ -41,7 +37,6 @@ def compute_strat_vector(agent, verbose=False):
     N_ROUNDS,
     N_MAX_ACTIVE_PLAYERS - 2,
     N_OWN_POT_SIZE_BINS,
-    # N_TOTAL_POT_BINS,
     N_CARD_PERCENTILE_BINS
   ))
   strategy = np.zeros((
@@ -49,7 +44,6 @@ def compute_strat_vector(agent, verbose=False):
     N_ROUNDS,
     N_MAX_ACTIVE_PLAYERS - 2,
     N_OWN_POT_SIZE_BINS,
-    # N_TOTAL_POT_BINS,
     N_CARD_PERCENTILE_BINS,
     ACTION_SPACE_BINS
   ))
@@ -176,8 +170,6 @@ def compute_strat_vector(agent, verbose=False):
             action_bins[actions == constants.FOLD] = constants.FOLD
             action_bins[actions == constants.CALL] = constants.CALL
             action_bins[np.logical_and(actions == constants.CALL, current_bets.sum(axis=1) == 0)] = constants.CHECK
-
-            # total_pot_idx = np.floor(np.sum(current_bets + prev_round_investment, axis=1) * N_TOTAL_POT_BINS / N_PLAYERS_TOTAL / (INITIAL_CAPITAL + 1)).astype(int)
 
             for card_rank in range(N_CARD_PERCENTILE_BINS):
               n_games[seating_position, round, n_active_players - 2, own_pot_idx, card_rank] += np.count_nonzero(
