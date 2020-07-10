@@ -102,11 +102,12 @@ class LeaderboardTrueskill(Leaderboard):
     plt.show()
 
   def print_current_ratings(self, agent_manager):
-    ratings = [(v[0], v[1], k, agent_manager.get_info(k).AGENT_TYPE,
-                'S' if agent_manager.get_info(k).TRAINABLE else 'T')
+    ratings = [(v[0], v[1], k, agent_manager.get_info(k))
                for k, v in self._ratings['current'].items()]
-    output = "\n".join("{:>3}: {:>10} {} {}: {:>7.2f} +/- {:>5.2f}".format(idx + 1, at, aid, tr, rating, 2 * sd)
-                       for idx, (rating, sd, aid, at, tr) in enumerate(sorted(ratings, reverse=True)))
+    output = "\n".join('{:>4}: {} {}.{} {:<20} {:>7.2f} +/- {:>5.2f}'
+                       .format(idx + 1, agent_info.AGENT_TYPE, agent_info.ORIGIN_DIVI, agent_id, agent_info.AGENT_NAME,
+                               mu, 2 * sigma)
+                       for idx, (mu, sigma, agent_id, agent_info) in enumerate(sorted(ratings, reverse=True)))
     print(output)
 
 
@@ -140,8 +141,10 @@ class LeaderboardPlacingMatrix(Leaderboard):
   def plot_matrix(self):
     ids = self._ratings['agent_ids']
 
+    pctl = 80
+
     current = self._ratings['current']
-    ids_sorted_by_avg_rank = sorted(ids, key=lambda x: sum(current[x].values()) / len(current[x].values()))
+    ids_sorted_by_avg_rank = sorted(ids, key=lambda x: np.percentile(list(current[x].values()), pctl))
 
     n = len(ids)
     tmp_arr = np.zeros((n, n))
@@ -156,29 +159,33 @@ class LeaderboardPlacingMatrix(Leaderboard):
         data_frame[agent_a][agent_b] = val
 
     sns.set(style='white')
-    cmap = sns.color_palette("coolwarm", 15)
+    cmap = sns.diverging_palette(255, 133, l=60, n=15, center="dark")
     sns.heatmap(data_frame, cmap=cmap)
     plt.xlabel('agent')
     plt.ylabel('opponent')
     plt.show()
 
   def print_leaderboard(self, agent_manager: AgentManager):
-    agent_ids = [(agent_id, agent_manager.get_info(agent_id).AGENT_NAME) for agent_id in self._ratings['agent_ids']]
+    agent_ids = [(agent_id, agent_manager.get_info(agent_id)) for agent_id in self._ratings['agent_ids']]
     current = self._ratings['current']
 
-    ids_with_avg_rank = (
-      (i,
-       n,
-       sum(current[i].values()) / len(current[i].values()),
-       np.median(list(current[i].values())),
-       np.percentile(list(current[i].values()), 80))
-      for i, n in agent_ids)
-    ids_sorted_by_avg_rank = sorted(ids_with_avg_rank, key=lambda x: x[3])
+    pctl = 80
 
-    print('{:>3}: {:<20} {:<5} {:<5} {:<5}'.format(' ', 'agent_id', 'avg', 'med', '80pctl'))
-    output = "\n".join(
-      '{:>3}: {:<20} {:<5.2f} {:<5.2f} {:<5.2f}'.format(idx + 1, agent_id, agent_name, avg_rank, median_rank, pctl)
-      for idx, (agent_id, agent_name, avg_rank, median_rank, pctl) in enumerate(ids_sorted_by_avg_rank))
+    ids_with_avg_rank = (
+      (agent_id,
+       agent_info,
+       sum(current[agent_id].values()) / len(current[agent_id].values()),
+       np.median(list(current[agent_id].values())),
+       np.percentile(list(current[agent_id].values()), pctl))
+      for agent_id, agent_info in agent_ids)
+    ids_sorted_by_avg_rank = sorted(ids_with_avg_rank, key=lambda x: x[4])
+
+    print('{:>4}  {} {} {:<20} {:<5} {:<5} {}pctl'.format('', 'type', 'div.id ', 'name', 'avg', 'med', pctl))
+    output = "\n".join('{:>4}: {} {}.{} {:<20} {:<5.2f} {:<5.2f} {:<5.2f}'
+                       .format(idx + 1, agent_info.AGENT_TYPE, agent_info.ORIGIN_DIVI, agent_id, agent_info.AGENT_NAME,
+                               avg_rank, median_rank, pctl)
+                       for idx, (agent_id, agent_info, avg_rank, median_rank, pctl) in
+                       enumerate(ids_sorted_by_avg_rank))
     print(output)
 
 
@@ -186,19 +193,18 @@ if __name__ == '__main__':
   agent_manager = AgentManager(file_path='../savefiles/agent_manager.json',
                                models_path=None,
                                possible_agent_names=None)
+  agent_manager.load()
 
   lpl = LeaderboardPlacingMatrix(file_path='../savefiles/leaderboards/34.json')
   lpl.load()
-  lpl.plot_matrix()
   lpl.print_leaderboard(agent_manager)
+  lpl.plot_matrix()
 
-  agent_manager.load()
-
-  relevant_leaderboards = ['17', '73', '78', '25', '69', '82', '77']
+  relevant_leaderboards = ['77'] + ['17', '73', '78', '25', '69', '82']
 
   for l in relevant_leaderboards:
     # select leaderboard to watch
-    leaderboard = LeaderboardTrueskill(file_path='../savefiles/leaderboard_{}.json'.format(l))
+    leaderboard = LeaderboardTrueskill(file_path='../savefiles/leaderboards/{}.json'.format(l))
     leaderboard.load()
 
     ratings = [r[0] for r in leaderboard._ratings['current'].values()]
