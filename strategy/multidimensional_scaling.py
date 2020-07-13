@@ -72,5 +72,4 @@ def kmeans(strategies, MAX_N=12, verbose=True):
     clusters = kmeans.fit_predict(X=flattened_strats)
     results[n] = clusters
 
-  print(results)
   return results
