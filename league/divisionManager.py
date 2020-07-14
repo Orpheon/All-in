@@ -10,7 +10,7 @@ from league.division import PermaEvalSimilarDivision
 from league.division import PermaEvalSampleDivision
 from league.division import ClimbingDivision
 
-from league.leaderboard import LeaderboardTrueskill
+from league.leaderboard import LeaderboardTrueskill, LeaderboardWinningsMatrix
 from league.leaderboard import LeaderboardPlacingMatrix
 
 DIVISION_TYPES = {'Random': RandomDivision,
@@ -20,7 +20,8 @@ DIVISION_TYPES = {'Random': RandomDivision,
                   'PESample': PermaEvalSampleDivision}
 
 LEADERBOARD_TYPES = {'Trueskill': LeaderboardTrueskill,
-                     'PlacingMatrix': LeaderboardPlacingMatrix}
+                     'PlacingMatrix': LeaderboardPlacingMatrix,
+                     'WinningsMatrix': LeaderboardWinningsMatrix}
 
 DivisionInfo = namedtuple('DivisionInfo', ['DIVISION_TYPE', 'FILE_PATH', 'LEADERBOARD_TYPE', 'LEADERBOARD_PATH'])
 
@@ -40,6 +41,7 @@ class DivisionManager:
     divi_id = random.choice(available)
     self.divis[divi_id] = DivisionInfo(division_type, '{}/{}.json'.format(self.DIVIS_PATH, divi_id),
                                        leaderboard_type, '{}/{}.json'.format(self.LEADERBOARDS_PATH, divi_id))
+    return divi_id
 
   def print_available_divisions(self):
     print('[DivisionManager] available divisions: {}'.format(len(self.divis)))

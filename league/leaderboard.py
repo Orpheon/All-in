@@ -41,11 +41,12 @@ class LeaderboardTrueskill(Leaderboard):
     self._trueskill = TrueSkill(mu=TRUESKILL_START_MU, sigma=TRUESKILL_START_SIGMA)
     self._ratings = {'current': {}, 'history': []}
 
-  def update_from_placings(self, agent_ids):
-    current_ratings = [self._trueskill.Rating(*self._ratings['current'].get(agent, ())) for agent in agent_ids]
+  def update_from_placings(self, placings):
+    placings_ids = [agent_id for agent_id, _ in placings]
+    current_ratings = [self._trueskill.Rating(*self._ratings['current'].get(agent, ())) for agent in placings_ids]
     new_rating_groups = self._trueskill.rate([(cr,) for cr in current_ratings])
     hist_append = {}
-    for agent, new_rating_group in zip(agent_ids, new_rating_groups):
+    for agent, new_rating_group in zip(placings_ids, new_rating_groups):
       new_rating = (new_rating_group[0].mu, new_rating_group[0].sigma)
       self._ratings['current'][agent] = new_rating
       hist_append[agent] = new_rating
@@ -117,10 +118,11 @@ class LeaderboardPlacingMatrix(Leaderboard):
     super().__init__(file_path)
     self._ratings = {'current': {}, 'n_games': {}, 'agent_ids': []}
 
-  def update_from_placings(self, agent_ids):
+  def update_from_placings(self, placings):
+    placings_ids = [agent_id for agent_id, _ in placings]
 
-    for rank, agent_a in enumerate(agent_ids):
-      for agent_b in agent_ids:
+    for rank, agent_a in enumerate(placings_ids):
+      for agent_b in placings_ids:
         if agent_a != agent_b:
           if agent_a not in self._ratings['agent_ids']: self._ratings['agent_ids'].append(agent_a)
           if agent_b not in self._ratings['agent_ids']: self._ratings['agent_ids'].append(agent_b)
@@ -159,7 +161,7 @@ class LeaderboardPlacingMatrix(Leaderboard):
         data_frame[agent_a][agent_b] = val
 
     sns.set(style='white')
-    cmap = sns.diverging_palette(255, 133, l=60, n=15, center="dark")
+    cmap = sns.diverging_palette(150, 10, l=60, n=45, center="dark")
     sns.heatmap(data_frame, cmap=cmap)
     plt.xlabel('agent')
     plt.ylabel('opponent')
@@ -188,12 +190,94 @@ class LeaderboardPlacingMatrix(Leaderboard):
                        enumerate(ids_sorted_by_avg_rank))
     print(output)
 
+class LeaderboardWinningsMatrix(Leaderboard):
+
+  def __init__(self, file_path):
+    super().__init__(file_path)
+    self._ratings = {'current': {}, 'n_games': {}, 'agent_ids': []}
+
+  def update_from_placings(self, placings):
+
+    for agent_a, winning_a in placings:
+      for agent_b, _ in placings:
+        if agent_a != agent_b:
+          if agent_a not in self._ratings['agent_ids']: self._ratings['agent_ids'].append(agent_a)
+          if agent_b not in self._ratings['agent_ids']: self._ratings['agent_ids'].append(agent_b)
+
+          if agent_a not in self._ratings['n_games']: self._ratings['n_games'][agent_a] = {}
+          if agent_b not in self._ratings['n_games'][agent_a]: self._ratings['n_games'][agent_a][agent_b] = 0
+
+          if agent_a not in self._ratings['current']: self._ratings['current'][agent_a] = {}
+          if agent_b not in self._ratings['current'][agent_a]: self._ratings['current'][agent_a][agent_b] = 0
+
+          self._ratings['n_games'][agent_a][agent_b] += 1
+          n_games = self._ratings['n_games'][agent_a][agent_b]
+          old_w = self._ratings['current'][agent_a][agent_b]
+          self._ratings['current'][agent_a][agent_b] = (winning_a - old_w) / n_games + old_w
+
+    self.changed = True
+
+  def plot_matrix(self):
+    ids = self._ratings['agent_ids']
+
+    pctl = 20
+
+    current = self._ratings['current']
+    ids_sorted_by_avg_rank = sorted(ids, key=lambda x: np.percentile(list(current[x].values()), pctl), reverse=True)
+
+    n = len(ids)
+    tmp_arr = np.zeros((n, n))
+
+    tmp_arr.fill(np.nan)
+    data_frame = pd.DataFrame(tmp_arr)
+    rename_dict = {idx: a_id for idx, a_id in enumerate(ids_sorted_by_avg_rank)}
+    data_frame.rename(columns=rename_dict, index=rename_dict, inplace=True)
+
+    for agent_a in self._ratings['current'].keys():
+      for agent_b, val in self._ratings['current'][agent_a].items():
+        data_frame[agent_a][agent_b] = val
+
+    sns.set(style='white')
+    cmap = sns.diverging_palette(10, 150, l=60, n=45, center="dark")
+    sns.heatmap(data_frame, cmap=cmap)
+    plt.xlabel('agent')
+    plt.ylabel('opponent')
+    plt.show()
+
+  def print_leaderboard(self, agent_manager: AgentManager):
+    agent_ids = [(agent_id, agent_manager.get_info(agent_id)) for agent_id in self._ratings['agent_ids']]
+    current = self._ratings['current']
+
+    pctl = 20
+
+    ids_with_avg_rank = (
+      (agent_id,
+       agent_info,
+       sum(current[agent_id].values()) / len(current[agent_id].values()),
+       np.median(list(current[agent_id].values())),
+       np.percentile(list(current[agent_id].values()), pctl))
+      for agent_id, agent_info in agent_ids)
+    ids_sorted_by_avg_rank = sorted(ids_with_avg_rank, key=lambda x: x[4], reverse=True)
+
+    print('{:>4}  {} {} {:<20} {:<5} {:<5} {}pctl'.format('', 'type', 'div.id ', 'name', 'avg', 'med', pctl))
+    output = "\n".join('{:>4}: {} {}.{} {:<20} {:<5.2f} {:<5.2f} {:<5.2f}'
+                       .format(idx + 1, agent_info.AGENT_TYPE, agent_info.ORIGIN_DIVI, agent_id, agent_info.AGENT_NAME,
+                               avg_rank, median_rank, pctl)
+                       for idx, (agent_id, agent_info, avg_rank, median_rank, pctl) in
+                       enumerate(ids_sorted_by_avg_rank))
+    print(output)
+
 
 if __name__ == '__main__':
   agent_manager = AgentManager(file_path='../savefiles/agent_manager.json',
                                models_path=None,
                                possible_agent_names=None)
   agent_manager.load()
+
+  lwl = LeaderboardWinningsMatrix(file_path='../savefiles/leaderboards/24.json')
+  lwl.load()
+  lwl.print_leaderboard(agent_manager)
+  lwl.plot_matrix()
 
   lpl = LeaderboardPlacingMatrix(file_path='../savefiles/leaderboards/34.json')
   lpl.load()

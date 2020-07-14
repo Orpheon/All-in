@@ -30,11 +30,11 @@ class Division:
     avg_wins = [(aid, at, sum(win) / len(win), len(win)) for aid, (at, win) in wins_dict.items()]
     sorted_winnings = sorted(avg_wins, key=lambda x: x[2], reverse=True)
 
-    text_ranking = '\n'.join('{} x {} {:>10}: {:>7.2f}'.format(nw, aid, str(at), avgw)
+    text_ranking = '\n'.join('{} x {} {:<25}: {:>7.2f}'.format(nw, aid, str(at), avgw)
                              for aid, at, avgw, nw in sorted_winnings)
     print('Winnings: \n{}'.format(text_ranking))
 
-    id_ranking = [aid for aid, _, _, _ in sorted_winnings]
+    id_ranking = [(aid, avg_win) for aid, _, avg_win, _ in sorted_winnings]
     return id_ranking
 
   def _generate_matchup(self):
@@ -57,6 +57,7 @@ class Division:
 
   def clone_mutables(self):
     pass
+
 
 class RandomDivision(Division):
 
