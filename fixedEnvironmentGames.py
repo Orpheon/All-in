@@ -4,15 +4,9 @@ from collections import namedtuple
 import pandas
 
 from agent.baseAgentNP import BaseAgentNP
-from agent.call.callAgentNP import CallAgentNP
-from agent.fold.foldAgentNP import FoldAgentNP
-from agent.qlearn1.qlearn1AgentNP import Qlearn1AgentNP
-from agent.qlearn2.qlearn2AgentNP import Qlearn2AgentNP
-from agent.qlearnX.qlearnXAgentNP import QlearnXAgentNP
-from agent.random.randomAgentNP import RandomAgentNP
+from league.agentManager import AgentManager
 from league.game import GameEngine
-from league.logger import GenericLogger
-from testing.mockGameEngine import MockGameEngine
+from league.logger import GenericLogger, NoneLogger
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -50,15 +44,18 @@ ActionReaction = namedtuple('ActionReaction', ['player_idx', 'round', 'active_ro
 class AgentActionLogger(BaseAgentNP):
 
   def __init__(self, agent):
-    super().__init__()
+    super().__init__(None, None, None)
     self._agent = agent
     self.actions = []
+    self.model_path = agent.MODEL_PATH
 
   def __str__(self):
     return 'AALogger({})'.format(str(self._agent))
 
   def act(self, player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment, folded, last_raiser,
           hole_cards, community_cards):
+    hole_cards.sort(axis=1)
+    community_cards[:, 0:3].sort(axis=1)
     action, amount = self._agent.act(player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment,
                                      folded, last_raiser, hole_cards, community_cards)
     self.actions.append(ActionReaction(player_idx, round, active_rounds, current_bets, min_raise, prev_round_investment,
@@ -99,12 +96,14 @@ def plot_sns_heatmap(data_pivot, title, save_to_file):
 
 def plot_curves(x, ys, lbls, title, save_to_file):
   # TODO: remove prints
-  for y, lbl in zip(ys, lbls):
-    plt.plot(x, y, label=lbl)
+  x = np.array(x)
+  ys = np.array(ys)
+  for idx in range(len(ys)):
+    plt.bar(x, ys[idx, :], bottom=np.sum(ys[:idx, :], axis=0))
   plt.title(title)
   plt.xlabel('preflop handvalue (winchance)')
   plt.ylabel('frequency (percent)')
-  plt.legend()
+  plt.legend(lbls)
   if save_to_file:
     plt.savefig(title)
   else:
@@ -112,12 +111,12 @@ def plot_curves(x, ys, lbls, title, save_to_file):
   plt.close()
 
 
-def plot_hand_strength_bet_distribution(agentActionLogger: AgentActionLogger):
+def plot_hand_strength_bet_distribution(agent_action_logger: AgentActionLogger):
   winrates = load_preflop_winrates()
 
   action_tables = {}
   amount_tables = {}
-  for i in agentActionLogger.actions:
+  for i in agent_action_logger.actions:
     for j in range(N_TESTCASES):
       hand_strength = winrates[tuple(sorted(i.hole_cards[j]))]
       if hand_strength not in action_tables.keys():
@@ -150,14 +149,16 @@ def plot_hand_strength_bet_distribution(agentActionLogger: AgentActionLogger):
     print(i, sum(e))
   print('-' * 50)
 
-  plot_curves(hand_strengths_x, action_ys, available_actions, 'fixed_environment_action_per_hs', False)
-  plot_curves(hand_strengths_x, amount_ys, available_amounts, 'fixed_environment_amount_per_hs', False)
+  p_name = agent_action_logger.model_path
+  plot_curves(hand_strengths_x, action_ys, available_actions, 'FE_action_per_hs {}'.format(p_name), False)
+  plot_curves(hand_strengths_x, amount_ys, available_amounts, 'FE_amount_per_hs {}'.format(p_name), False)
 
   # TODO: remove return
   return
+
   actions = {}
   amounts = {}
-  for i in agentActionLogger.actions:
+  for i in agent_action_logger.actions:
     for j in range(N_TESTCASES):
       hand_strength = winrates[tuple(sorted(i.hole_cards[j]))]
       actions[hand_strength, i.action[j]] = actions.get((hand_strength, i.action[j]), 0) + 1
@@ -179,9 +180,22 @@ def plot_hand_strength_bet_distribution(agentActionLogger: AgentActionLogger):
   plot_sns_heatmap(data_pivot=hs_amount_pivot, title='fixed_environment_amount_per_hs', save_to_file=False)
 
 
+def print_winnings(winnings):
+  print('-' * 100)
+  print('winnings:')
+  print(
+    '{:^30}: {:^18} | {:^8} {:^8} {:^8} {:^8} {:^8} {:^8}'.format('name', 'total winning', 'SB', 'BB', 'EP', 'MP', 'CO',
+                                                                  'BTN'))
+  print('-' * 100)
+  for p, sw in sorted(winnings.items(), key=lambda x: sum(x[1]), reverse=True):
+    print('{:<30}: {:<18.3f} | {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f}'
+          .format(str(p), sum(sw), sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]))
+  print('-' * 100)
+
+
 if __name__ == '__main__':
   # config
-  N_TESTCASES = 20_000
+  N_TESTCASES = 10_000
   INITIAL_CAPITAL = 200
   SMALL_BLIND = 1
   BIG_BLIND = 2
@@ -197,28 +211,28 @@ if __name__ == '__main__':
   print('N_PLAYERS       ', N_PLAYERS)
   print('N_RUNS:         ', N_RUNS)
 
+  agent_manager = AgentManager(file_path='./savefiles/agent_manager.json', models_path='./models',
+                               possible_agent_names=None)
+  agent_manager.load()
 
-  community_cards, hole_hands = generate_sorted_deck(N_TESTCASES, N_PLAYERS)
   logger = GenericLogger()
+  # logger = NoneLogger()
 
+  # community_cards, hole_hands = generate_sorted_deck(N_TESTCASES, N_PLAYERS)
   # mock_game_engine = MockGameEngine(N_TESTCASES, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, community_cards, hole_hands,
   #                                  logger)
 
   mock_game_engine = GameEngine(N_TESTCASES, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, logger)
 
-  qlearning_agent = Qlearn1AgentNP.from_id('Qlearn1-83880857')
-  aALogger = AgentActionLogger(qlearning_agent)
+#  agent_ids = ['1338', '1028', '2377', '1991', '5920', '9437']
+  agent_ids = ['1991', '1991', '1991', '0254', '0254', '0254']
+  players = [agent_manager.get_instance(agent_id) for agent_id in agent_ids]
 
-  players = [RandomAgentNP('Rng-{}'.format(i), None) for i in range(3)] +\
-            [CallAgentNP('Cll-{}'.format(i), None) for i in range(2)] +\
-            [aALogger]
-
-  # TODO: reenable
-  # players = [FoldAgentNP('Dmy', None) for _ in range(3)] + [aALogger] + [FoldAgentNP('Dmy', None) for _ in range(2)]
+  cumulated_winnings = {str(p): [-1 for _ in range(6)] for p in players}
 
   for _ in range(N_RUNS):
-    cumulated_winnings = {str(p): [-1 for _ in range(6)] for p in players}
     for seat_shift in range(0, 6):
+      print('seat_shift:', seat_shift)
       players = players[1:] + players[:1]
       total_winnings = mock_game_engine.run_game(players)
       winnings = np.sum(total_winnings, axis=0).tolist()
@@ -226,12 +240,7 @@ if __name__ == '__main__':
       for s, (p, w) in enumerate(zip(players, winnings)):
         cumulated_winnings[str(p)][s] = w / N_TESTCASES
 
-    print('-' * 100)
-    print('winnings:')
-    print('{:^30}: {:^18} | {:^8} {:^8} {:^8} {:^8} {:^8} {:^8}'.format('name', 'total winning', 'SB', 'BB', 'EP', 'MP', 'CO', 'BTN'))
-    print('-' * 100)
-    for p, sw in sorted(cumulated_winnings.items(), key=lambda x: x[1], reverse=True):
-      print('{:<30}: {:<18.3f} | {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f}'.format(str(p), sum(sw), sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]))
-    print('-' * 100)
+  print_winnings(cumulated_winnings)
 
-#  plot_hand_strength_bet_distribution(aALogger)
+  for p in players:
+    plot_hand_strength_bet_distribution(p)
