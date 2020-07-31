@@ -23,7 +23,7 @@ LEADERBOARD_TYPES = {'Trueskill': LeaderboardTrueskill,
                      'PlacingMatrix': LeaderboardPlacingMatrix,
                      'WinningsMatrix': LeaderboardWinningsMatrix}
 
-DivisionInfo = namedtuple('DivisionInfo', ['DIVISION_TYPE', 'FILE_PATH', 'LEADERBOARD_TYPE', 'LEADERBOARD_PATH'])
+DivisionInfo = namedtuple('DivisionInfo', ['DIVISION_TYPE', 'FILE_PATH', 'LEADERBOARDS'])
 
 
 class DivisionManager:
@@ -34,13 +34,15 @@ class DivisionManager:
     self.LEADERBOARDS_PATH = leaderboards_path
     self.divis = {}
 
-  def add_division(self, division_type, leaderboard_type):
+  def add_division(self, division_type, leaderboard_types):
     all_possible_divi_ids = {'{:02}'.format(i) for i in range(100)}  # TODO currently limited to 100 divisions
     taken = self.divis.keys()
     available = list(all_possible_divi_ids - taken)
     divi_id = random.choice(available)
-    self.divis[divi_id] = DivisionInfo(division_type, '{}/{}.json'.format(self.DIVIS_PATH, divi_id),
-                                       leaderboard_type, '{}/{}.json'.format(self.LEADERBOARDS_PATH, divi_id))
+    self.divis[divi_id] = DivisionInfo(division_type,
+                                       '{}/{}.json'.format(self.DIVIS_PATH, divi_id),
+                                       [(lb_type, '{}/{}_{}.json'.format(self.LEADERBOARDS_PATH, divi_id, lb_idx))
+                                        for lb_idx, lb_type in enumerate(leaderboard_types)])
     return divi_id
 
   def print_available_divisions(self):
@@ -49,10 +51,11 @@ class DivisionManager:
       print(k, v)
 
   def _instantiate_division(self, division_info: DivisionInfo, game_engine, agent_manager, divi_id):
-    leaderboard = LEADERBOARD_TYPES[division_info.LEADERBOARD_TYPE](division_info.LEADERBOARD_PATH)
-    divi = DIVISION_TYPES[division_info.DIVISION_TYPE](division_info.FILE_PATH, game_engine, leaderboard, agent_manager,
+    leaderboards = [LEADERBOARD_TYPES[lb_type](lb_type, lb_path)
+                    for lb_type, lb_path in division_info.LEADERBOARDS]
+    divi = DIVISION_TYPES[division_info.DIVISION_TYPE](division_info.FILE_PATH, game_engine, leaderboards, agent_manager,
                                                        divi_id)
-    return divi, leaderboard
+    return divi, leaderboards
 
   def get_divi_instances(self, divi_ids, game_engine, agent_manager):
     divis = {divi_id: (self._instantiate_division(self.divis[divi_id], game_engine, agent_manager, divi_id))

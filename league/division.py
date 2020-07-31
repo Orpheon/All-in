@@ -8,17 +8,18 @@ from league.agentManager import AgentManager
 
 class Division:
 
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager, division_id):
+  def __init__(self, file_path, game_engine, leaderboards, agent_manager, division_id):
     self.FILE_PATH = file_path
     self.GAME_ENGINE = game_engine
-    self.LEADERBOARD = leaderboard
+    self.LEADERBOARDS = leaderboards
     self.AGENT_MANAGER = agent_manager
     self.DIVISION_ID = division_id
 
   def run_next(self):
     matchup, ids = self._generate_matchup()
     placings = self._run_games(matchup, ids)
-    self.LEADERBOARD.update_from_placings(placings)
+    for lb in self.LEADERBOARDS:
+      lb.update_from_placings(placings)
 
   def _run_games(self, agent_types, agent_ids):
     total_winnings = self.GAME_ENGINE.run_game(agent_types)
@@ -61,8 +62,8 @@ class Division:
 
 class RandomDivision(Division):
 
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager, division_id):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
+  def __init__(self, file_path, game_engine, leaderboards, agent_manager, division_id):
+    super().__init__(file_path, game_engine, leaderboards, agent_manager, division_id)
     self.state = {'type': 'RandomDivision', 'teachers': [], 'students': []}
 
   def _generate_matchup(self):
@@ -115,12 +116,12 @@ class OverfitDivision(Division):
     self.state['is_learning'] = False
 
   def get_best_agent(self):
-    return self.LEADERBOARD.get_all_rankings()[0][0]
+    return self.LEADERBOARDS.get_all_rankings()[0][0]
 
 
 class PermaEvalChoiceDivision(Division):
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
+  def __init__(self, file_path, game_engine, leaderboards, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboards, agent_manager, division_id)
     self.state = {'type': 'PermaEvalChoiceDivision', 'n_rounds_played': {}}
 
   def _generate_matchup(self):
@@ -146,29 +147,30 @@ class PermaEvalChoiceDivision(Division):
 
 
 class PermaEvalSampleDivision(Division):
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
+  def __init__(self, file_path, game_engine, leaderboards, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboards, agent_manager, division_id)
     self.state = {'type': 'PermaEvalSampleDivision', 'n_rounds_played': {}}
 
   def _generate_matchup(self):
     all_Teachers = [id for id in self.AGENT_MANAGER.agents if not self.AGENT_MANAGER.get_info(id).TRAINABLE]
 
-    random_agents = random.sample(all_Teachers, k=5)
-    agents_sorted_by_usage = sorted([(agent_id, self.state['n_rounds_played'].get(agent_id, 0))
-                                     for agent_id in all_Teachers], key=lambda x: x[1])
-    agents_sorted_by_usage_filtered = [(agent_id, nrp) for agent_id, nrp in agents_sorted_by_usage if
-                                       agent_id not in random_agents]
+    matchup_frequencies = []
+    for t1 in all_Teachers:
+      for t2 in all_Teachers:
+        if t1 < t2:
+          matchup_frequencies.append((self.state['n_rounds_played'].get(t1, {}).get(t2, 0), t1, t2))
 
-    if len(agents_sorted_by_usage_filtered) == 0:
-      least_used_agent = agents_sorted_by_usage[0]
-    else:
-      least_used_agent = agents_sorted_by_usage_filtered[0]
+    rarest_matchup = sorted(matchup_frequencies, key=lambda x: x[0])[0]
+    _, agent_id_1, agent_id_2 = rarest_matchup
 
-    matchup_ids = [least_used_agent[0], *random_agents]
+    matchup_ids = [agent_id_1] * 3 + [agent_id_2] * 3
     random.shuffle(matchup_ids)
 
-    for id in matchup_ids:
-      self.state['n_rounds_played'][id] = self.state['n_rounds_played'].get(id, 0) + 1
+    if agent_id_1 not in self.state['n_rounds_played']:
+      self.state['n_rounds_played'][agent_id_1] = {}
+    if agent_id_2 not in self.state['n_rounds_played'][agent_id_1]:
+      self.state['n_rounds_played'][agent_id_1][agent_id_2] = 0
+    self.state['n_rounds_played'][agent_id_1][agent_id_2] += 1
 
     return [self.AGENT_MANAGER.get_instance(agent_id) for agent_id in matchup_ids], matchup_ids
 
@@ -180,13 +182,13 @@ class PermaEvalSampleDivision(Division):
 class PermaEvalSimilarDivision(Division):
   RANK_RADIUS = 5
 
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
+  def __init__(self, file_path, game_engine, leaderboards, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboards, agent_manager, division_id)
     self.state = {'type': 'PermaEvalSimilarDivision', 'n_rounds_played': {}}
 
   def _generate_matchup(self):
     all_Teachers = [id for id in self.AGENT_MANAGER.agents if not self.AGENT_MANAGER.get_info(id).TRAINABLE]
-    teachers_by_ts = [(agent_id, self.LEADERBOARD.get_ranking(agent_id)[0]) for agent_id in all_Teachers]
+    teachers_by_ts = [(agent_id, self.LEADERBOARDS[0].get_ranking(agent_id)[0]) for agent_id in all_Teachers]
     teachers_sorted_by_ts = list(enumerate(sorted(teachers_by_ts, key=lambda x: x[1])))
     origin = random.choice(teachers_sorted_by_ts)
     origin_agent_id = origin[1][0]
@@ -218,12 +220,12 @@ class ClimbingDivision(Division):
   P_TRAINING = 0.8
   RANK_RADIUS = 5
 
-  def __init__(self, file_path, game_engine, leaderboard, agent_manager: AgentManager, division_id):
-    super().__init__(file_path, game_engine, leaderboard, agent_manager, division_id)
+  def __init__(self, file_path, game_engine, leaderboards, agent_manager: AgentManager, division_id):
+    super().__init__(file_path, game_engine, leaderboards, agent_manager, division_id)
     self.state = {'type': 'ClimbingDivision', 'students': [], 'teachers': []}
 
   def _generate_matchup(self):
-    teachers_by_ts = [(agent_id, self.LEADERBOARD.get_ranking(agent_id)[0]) for agent_id in self.state['teachers']]
+    teachers_by_ts = [(agent_id, self.LEADERBOARDS[0].get_ranking(agent_id)[0]) for agent_id in self.state['teachers']]
 
     if random.random() <= self.P_TRAINING:
       student = random.choice(self.state['students'])

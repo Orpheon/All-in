@@ -8,6 +8,8 @@ from agent.qlearn1.qlearn1AgentNP import Qlearn1AgentNP
 from agent.qlearn2.qlearn2AgentNP import Qlearn2AgentNP
 from agent.qlearn3.qlearn3AgentNP import Qlearn3AgentNP
 from agent.qlearn4.qlearn4AgentNP import Qlearn4AgentNP
+from agent.qlearn5.qlearn5AgentNP import Qlearn5AgentNP
+from agent.qlearn6.qlearn6AgentNP import Qlearn6AgentNP
 from agent.random.randomAgentNP import RandomAgentNP
 from agent.call.callAgentNP import CallAgentNP
 from agent.sac1.sac1AgentNP import Sac1AgentNP
@@ -18,6 +20,8 @@ AGENT_TYPES = {'qln1': Qlearn1AgentNP,
                'qln2': Qlearn2AgentNP,
                'qln3': Qlearn3AgentNP,
                'qln4': Qlearn4AgentNP,
+               'qln5': Qlearn5AgentNP,
+               'qln6': Qlearn6AgentNP,
                'sac1': Sac1AgentNP,
                'sac2': Sac2AgentNP,
                'rndm': RandomAgentNP,
