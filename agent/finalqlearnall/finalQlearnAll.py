@@ -185,16 +185,10 @@ class FinalQlearnAll(BaseAgentNP):
     return network_input
 
   def choose_action(self, network_input, current_bets, total_investment):
-    scores = np.ndarray((self.BATCH_SIZE, self.act_dim))
-    investment_normalized = (-total_investment / self.INITAL_CAPITAL - (self.N_PLAYERS / 2 - 1)) * 2 / self.N_PLAYERS
     with torch.no_grad():
+      scores = self.q(network_input).cpu().numpy()
+      investment_normalized = (-total_investment / self.INITAL_CAPITAL - (self.N_PLAYERS / 2 - 1)) * 2 / self.N_PLAYERS
       scores[:, 0] = investment_normalized
-      for idx in range(1, self.possible_actions.shape[1]):
-        onehot_actions = torch.eye(self.act_dim, device=DEVICE)[
-          torch.full((self.BATCH_SIZE,), idx, dtype=torch.long, device=DEVICE)
-        ]
-        scores[:, idx] = self.q(network_input, onehot_actions).cpu().numpy()
-
       actions = np.argmax(scores, axis=1)
 
     if self.TRAINABLE:
@@ -207,7 +201,7 @@ class FinalQlearnAll(BaseAgentNP):
 
     actions[actions >= constants.RAISE] = constants.RAISE
 
-    actions[current_bets.sum(axis=1) == 0] = np.max(actions[current_bets.sum(axis=1) == 0], constants.CALL)
+    actions[current_bets.sum(axis=1) == 0] = np.maximum(actions[current_bets.sum(axis=1) == 0], constants.CALL)
 
     self.logger.store(Calls=100 * np.mean(actions == constants.CALL),
                       Folds=100 * np.mean(actions == constants.FOLD))
@@ -220,7 +214,7 @@ class FinalQlearnAll(BaseAgentNP):
   def compute_loss_q(self, data):
     o, a, o2, active = data['obs'], data['act'], data['obs2'], data['active']
 
-    q = self.q(o, a)
+    q = torch.sum(self.q(o) * a, dim=1)
 
     loss_q = (active * (q - self.reward) ** 2).sum()
 

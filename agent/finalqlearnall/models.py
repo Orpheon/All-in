@@ -28,7 +28,7 @@ class MLPQFunction(nn.Module):
 
     self.device = device
 
-    self.q = mlp([obs_dim + act_dim] + list(hidden_sizes) + [1], activation, output_activation=nn.Tanh)
+    self.q = mlp([obs_dim] + list(hidden_sizes) + [act_dim], activation, output_activation=nn.Tanh)
     self.q.to(device)
     self.trainable = trainable
     if trainable:
@@ -36,9 +36,8 @@ class MLPQFunction(nn.Module):
     else:
       self.q.eval()
 
-  def forward(self, obs, act):
-    q = self.q(torch.cat([obs, act], dim=-1))
-    return torch.squeeze(q, -1) # Critical to ensure q has right shape.
+  def forward(self, obs):
+    return self.q(obs)
 
   def save(self, path):
     os.makedirs(path, exist_ok=True)
