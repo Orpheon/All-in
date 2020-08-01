@@ -207,7 +207,7 @@ class FinalQlearnAll(BaseAgentNP):
 
     actions[actions >= constants.RAISE] = constants.RAISE
 
-    actions[current_bets.sum(axis=1) == 0] = np.max(actions[current_bets.sum(axis=1) == 0], constants.CALL)
+    actions[current_bets.sum(axis=1) == 0] = np.maximum(actions[current_bets.sum(axis=1) == 0], constants.CALL)
 
     self.logger.store(Calls=100 * np.mean(actions == constants.CALL),
                       Folds=100 * np.mean(actions == constants.FOLD))
