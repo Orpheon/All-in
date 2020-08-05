@@ -13,12 +13,12 @@ import constants
 DEVICE = 'cuda'
 NOISE_LEVEL = 0.1
 Q_LEARNING_RATE = 0.001
-ROOT_PATH = 'qlearn-all'
+ROOT_PATH = 'finalqlearnall'
 REPLAYBUFFER_SIZE = 60
 
 class FinalQlearnAll(BaseAgentNP):
   MODEL_FILES = ['q.modelb']
-  logger = EpochLogger(output_dir='qlearn-all/logs', output_fname='progress.csv')
+  logger = EpochLogger(output_dir='finalqlearnall/logs', output_fname='progress.csv')
 
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size

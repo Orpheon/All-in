@@ -13,12 +13,12 @@ import constants
 DEVICE = 'cuda'
 NOISE_LEVEL = 0.1
 Q_LEARNING_RATE = 0.001
-ROOT_PATH = 'qlearn-10'
+ROOT_PATH = 'finalqlearnallNC'
 REPLAYBUFFER_SIZE = 60
 
 class FinalQlearnAllNC(BaseAgentNP):
   MODEL_FILES = ['q.modelb']
-  logger = EpochLogger(output_dir='qlearn-10/logs', output_fname='progress.csv')
+  logger = EpochLogger(output_dir='finalqlearnallNC/logs', output_fname='progress.csv')
 
   def initialize(self, batch_size, initial_capital, n_players):
     self.BATCH_SIZE = batch_size
@@ -37,12 +37,12 @@ class FinalQlearnAllNC(BaseAgentNP):
     self.possible_actions = torch.zeros((self.BATCH_SIZE, self.act_dim), device=DEVICE)
 
     self.ranktable = np.stack((
-      np.load(os.path.join("agent", "finalqlearn10", "5card_rank_percentile.npy")),
-      np.load(os.path.join("agent", "finalqlearn10", "6card_rank_percentile.npy")),
-      np.load(os.path.join("agent", "finalqlearn10", "7card_rank_percentile.npy"))
+      np.load(os.path.join("agent", "finalqlearnallNC", "5card_rank_percentile.npy")),
+      np.load(os.path.join("agent", "finalqlearnallNC", "6card_rank_percentile.npy")),
+      np.load(os.path.join("agent", "finalqlearnallNC", "7card_rank_percentile.npy"))
     ))
 
-    self.preflop_table = np.load(os.path.join("agent", "finalqlearn10", "preflop_ranks.npy")).tolist()
+    self.preflop_table = np.load(os.path.join("agent", "finalqlearnallNC", "preflop_ranks.npy")).tolist()
 
     if self.TRAINABLE:
       self.reward = torch.zeros(self.BATCH_SIZE)
