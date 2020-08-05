@@ -130,9 +130,8 @@ class GameEngine:
         calls = np.where(np.logical_and(round_countdown > 0, actions == constants.CALL))[0]
         if calls.size > 0:
           # print("True calls", calls)
-          investment = max_bets[calls]
+          investment = np.minimum(self.INITIAL_CAPITAL - prev_round_investment[calls, player_idx], max_bets[calls])
           # Reset the bets and countdown
-          max_bets[calls] = investment
           current_bets[calls, player_idx] = investment
 
         ###########
@@ -143,11 +142,10 @@ class GameEngine:
         if raises.size > 0:
           # print("True raises", raises, amounts[raises])
           investment = np.maximum(current_bets[raises, player_idx] + amounts[raises], max_bets[raises] + min_raise[raises])
-          investment = np.minimum(investment, self.INITIAL_CAPITAL - prev_round_investment[raises, player_idx])
-          assert((investment + prev_round_investment[raises, player_idx] <= self.INITIAL_CAPITAL).all())
-          # Reset the bets and countdown
+          min_raise[raises] = investment - max_bets[raises]
           max_bets[raises] = investment
-          current_bets[raises, player_idx] = investment
+          # Reset the bets and countdown
+          current_bets[raises, player_idx] = np.minimum(investment, self.INITIAL_CAPITAL - prev_round_investment[raises, player_idx])
           round_countdown[raises] = self.N_PLAYERS
           last_raiser[raises] = player_idx
 
