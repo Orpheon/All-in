@@ -4,6 +4,11 @@ import numpy as np
 import os
 import random
 
+from agent.finalqlearn10.finalQlearn10 import FinalQlearn10
+from agent.finalqlearnall.finalQlearnAll import FinalQlearnAll
+from agent.finalsachigh.finalSacHigh import FinalSACHigh
+from agent.finalsaclow.finalSacLow import FinalSACLow
+
 from agent.qlearn1.qlearn1AgentNP import Qlearn1AgentNP
 from agent.qlearn2.qlearn2AgentNP import Qlearn2AgentNP
 from agent.qlearn3.qlearn3AgentNP import Qlearn3AgentNP
@@ -14,18 +19,13 @@ from agent.random.randomAgentNP import RandomAgentNP
 from agent.call.callAgentNP import CallAgentNP
 from agent.sac1.sac1AgentNP import Sac1AgentNP
 from agent.sac2.sac2AgentNP import Sac2AgentNP
-from agent.finalqlearnall.finalQlearnAll import FinalQlearnAll
 from strategy.compute_strat_vector import compute_strat_vector
 
-AGENT_TYPES = {'qln1': Qlearn1AgentNP,
-               'qln2': Qlearn2AgentNP,
-               'qln3': Qlearn3AgentNP,
-               'qln4': Qlearn4AgentNP,
-               'qln5': Qlearn5AgentNP,
-               'qln6': Qlearn6AgentNP,
-               'sac1': Sac1AgentNP,
-               'sac2': Sac2AgentNP,
+AGENT_TYPES = {'qln5': Qlearn5AgentNP,
                'finalqlearnall': FinalQlearnAll,
+               'finalqlearn10': FinalQlearn10,
+               'finalsachigh': FinalSACHigh,
+               'finalsaclow': FinalSACLow,
                'rndm': RandomAgentNP,
                'call': CallAgentNP}
 
