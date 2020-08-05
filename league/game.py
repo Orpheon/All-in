@@ -54,7 +54,7 @@ class GameEngine:
 
     # Showdown
     pool = np.sum(prev_round_investment, axis=1)
-    total_winnings = np.zeros((self.BATCH_SIZE, self.N_PLAYERS), dtype=int)
+    total_winnings = np.zeros((self.BATCH_SIZE, self.N_PLAYERS), dtype=float)
 
     hand_scores = self.evaluate_hands(community_cards, hole_cards, np.logical_not(folded))
 
@@ -66,7 +66,7 @@ class GameEngine:
     n_splits_per_game = participants.sum(axis=1)
     # Split and distribute the money
     # FIXME: Make this a real division
-    gains = pool // n_splits_per_game
+    gains = pool / n_splits_per_game
     total_winnings += participants * gains[:, None]
 
     total_winnings -= prev_round_investment

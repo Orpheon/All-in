@@ -184,12 +184,12 @@ def print_winnings(winnings):
   print('-' * 100)
   print('winnings:')
   print(
-    '{:^30}: {:^18} | {:^8} {:^8} {:^8} {:^8} {:^8} {:^8}'.format('name', 'total winning', 'SB', 'BB', 'EP', 'MP', 'CO',
+    '{:^30}: {:^18} | {:^8} {:^8} {:^8} {:^8} {:^8} {:^8}'.format('name', 'mean winning', 'SB', 'BB', 'EP', 'MP', 'CO',
                                                                   'BTN'))
   print('-' * 100)
   for p, sw in sorted(winnings.items(), key=lambda x: sum(x[1]), reverse=True):
     print('{:<30}: {:<18.3f} | {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f} {:8.2f}'
-          .format(str(p), sum(sw), sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]))
+          .format(str(p), sum(sw) / 6, sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]))
   print('-' * 100)
 
 
@@ -233,12 +233,11 @@ if __name__ == '__main__':
   for _ in range(N_RUNS):
     for seat_shift in range(0, 6):
       print('seat_shift:', seat_shift)
-      players = players[1:] + players[:1]
-      total_winnings = mock_game_engine.run_game(players)
       winnings = np.sum(total_winnings, axis=0).tolist()
 
       for s, (p, w) in enumerate(zip(players, winnings)):
         cumulated_winnings[str(p)][s] = w / N_TESTCASES
+      players = players[-1:] + players[:-1]
 
   print_winnings(cumulated_winnings)
 
