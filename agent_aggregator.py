@@ -4,9 +4,11 @@ from league.divisionManager import DivisionManager
 import pandas as pd
 import numpy as np
 
-def print_to_file(filename, dataframe):
-  with open('{}.txt'.format(filename), 'w') as f:
-    f.write(dataframe.to_latex(longtable=True, index=True))
+
+def print_to_file(filename, dataframe, index):
+  with open('latex_output/{}.txt'.format(filename), 'w') as f:
+    f.write(dataframe.to_latex(longtable=True, index=index))
+
 
 if __name__ == '__main__':
   agent_manager = AgentManager(file_path='./savefiles/agent_manager.json',
@@ -33,25 +35,59 @@ if __name__ == '__main__':
   win = divis['47'][1][0]
 
   pctl = 20
-  headers = ['name', 'type', 'origin_divi', 'generation', 'TS1', 'TS2', 'TS', 'mean', 'median', '20pctl']
+  headers = ['Name', 'Type', 'Division', 'Generation', 'TrueSkill1', 'TrueSkill2', 'TrueSkill', 'Mean', 'Median',
+             '20-Percentile']
   agent_table = pd.DataFrame(columns=headers)
+
+  # check unique names
+  agent_names = [a_info.AGENT_NAME for _, a_info in agent_manager.agents.items()]
+  print(len(agent_names), len(set(agent_names)))
+
   for agent_id, agent_info in agent_manager.agents.items():
     if not agent_info.TRAINABLE:
       divi_baselines = divis[agent_info.ORIGIN_DIVI][0].state['teachers'][:2]
       divi_clones = divis[agent_info.ORIGIN_DIVI][0].state['teachers'][2:]
-      agent_table = agent_table.append({'name': agent_info.AGENT_NAME,
-                                        'type': agent_info.AGENT_TYPE,
-                                        'origin_divi': agent_info.ORIGIN_DIVI,
-                                        'generation': 0 if agent_id in divi_baselines else divi_clones.index(agent_id) + 1 if len(divi_clones) == 10 else divi_clones.index(agent_id)//4 + 1,
-                                        'TS1': ts1._ratings['current'][agent_id][0],
-                                        'TS2': ts2._ratings['current'][agent_id][0],
-                                        'TS': (ts1._ratings['current'][agent_id][0] + ts2._ratings['current'][agent_id][0]) / 2,
-                                        'mean': sum(win._ratings['current'][agent_id].values()) / len(win._ratings['current'][agent_id]),
-                                        'median': np.median(list(win._ratings['current'][agent_id].values())),
-                                        '20pctl': np.percentile(list(win._ratings['current'][agent_id].values()), pctl)},
+      agent_table = agent_table.append({'Name': agent_info.AGENT_NAME,
+                                        'Type': agent_info.AGENT_TYPE,
+                                        'Division': agent_info.ORIGIN_DIVI,
+                                        'Generation': 0 if agent_id in divi_baselines else divi_clones.index(
+                                          agent_id) + 1 if len(divi_clones) == 10 else divi_clones.index(
+                                          agent_id) // 4 + 1,
+                                        'TrueSkill1': ts1._ratings['current'][agent_id][0],
+                                        'TrueSkill2': ts2._ratings['current'][agent_id][0],
+                                        'TrueSkill': (ts1._ratings['current'][agent_id][0] +
+                                                      ts2._ratings['current'][agent_id][0]) / 2,
+                                        'Mean': sum(win._ratings['current'][agent_id].values()) / len(
+                                          win._ratings['current'][agent_id]),
+                                        'Median': np.median(list(win._ratings['current'][agent_id].values())),
+                                        '20-Percentile': np.percentile(list(win._ratings['current'][agent_id].values()),
+                                                                       pctl)},
                                        ignore_index=True)
 
-  # all printing and filtering
-  sorted_by_trueskill1 = agent_table.sort_values(by=['TS'])
+  print(agent_table.dtypes)
 
-  print_to_file('sorted_by_trueskill', sorted_by_trueskill1)
+  # all printing and filtering
+  fig1_sorts = ['TrueSkill', 'Mean', 'Median', '20-Percentile']
+  for fig1_s in fig1_sorts:
+    fig1_sorted_table = agent_table \
+      .round(2) \
+      .sort_values(by=[fig1_s], ascending=False) \
+      .filter(items=['Name', 'TrueSkill', 'Mean', 'Median', '20-Percentile']) \
+      .head(10)
+    print_to_file('sorted_by_{}'.format(fig1_s), fig1_sorted_table, index=False)
+
+  length = 20
+  fig2_sorts = ['TrueSkill', 'Mean', 'Median', '20-Percentile']
+  fig2_sorted_tables = [
+    agent_table \
+      .filter(items=['Type', 'TrueSkill', 'Mean', 'Median', '20-Percentile']) \
+      .sort_values(by=[fig2_s], ascending=False)
+      .filter(items=['Type'])
+      .head(length)\
+      .to_numpy()
+    for fig2_s in fig2_sorts
+  ]
+  fig2_sorted_tables.insert(0, np.arange(1, length+1).reshape((length, 1)))
+  print(fig2_sorted_tables)
+  fig2_concatenated_tables = pd.DataFrame(np.concatenate(fig2_sorted_tables, axis=1), columns=fig2_sorts)
+  print_to_file('top_agent_types_by_metric', fig2_concatenated_tables, index=True)
