@@ -188,7 +188,7 @@ class PermaEvalSimilarDivision(Division):
 
   def _generate_matchup(self):
     all_Teachers = [id for id in self.AGENT_MANAGER.agents if not self.AGENT_MANAGER.get_info(id).TRAINABLE]
-    teachers_by_ts = [(agent_id, self.LEADERBOARDS[0].get_ranking(agent_id)[0]) for agent_id in all_Teachers]
+    teachers_by_ts = [(agent_id, self.LEADERBOARDS[0].get_rating_of_agent(agent_id)[0]) for agent_id in all_Teachers]
     teachers_sorted_by_ts = list(enumerate(sorted(teachers_by_ts, key=lambda x: x[1])))
     origin = random.choice(teachers_sorted_by_ts)
     origin_agent_id = origin[1][0]
@@ -225,7 +225,7 @@ class ClimbingDivision(Division):
     self.state = {'type': 'ClimbingDivision', 'students': [], 'teachers': []}
 
   def _generate_matchup(self):
-    teachers_by_ts = [(agent_id, self.LEADERBOARDS[0].get_ranking(agent_id)[0]) for agent_id in self.state['teachers']]
+    teachers_by_ts = [(agent_id, self.LEADERBOARDS[0].get_rating_of_agent(agent_id)[0]) for agent_id in self.state['teachers']]
 
     if random.random() <= self.P_TRAINING:
       student = random.choice(self.state['students'])

@@ -58,7 +58,7 @@ class LeaderboardTrueskill(Leaderboard):
     sorted_ratings = sorted(self._ratings['current'].items(), key=lambda x: x[1][0], reverse=True)
     return sorted_ratings
 
-  def get_ranking(self, agent_id):
+  def get_rating_of_agent(self, agent_id):
     # TODO ranking != mu, but keep atm
     return self._ratings['current'].get(agent_id, (TRUESKILL_START_MU, TRUESKILL_START_SIGMA))
 
@@ -76,10 +76,10 @@ class LeaderboardTrueskill(Leaderboard):
     x = np.arange(len(self._ratings['history']))
 
     agent_types = {agent_type: idx for idx, agent_type in enumerate(AGENT_TYPES.keys())}
-    palette = sns.color_palette("husl", n_colors=len(agent_types))
-    #palette = [(60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (220, 190, 255), (128, 0, 0), (0, 0, 128),
-    #           (128, 128, 128), (0, 0, 0), (64, 64, 64)]
-    #palette = [(r / 255, g / 255, b / 255) for r, g, b in palette]
+    #palette = sns.color_palette("husl", n_colors=len(agent_types))
+    palette = [(60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (220, 190, 255), (128, 0, 0), (0, 0, 128),
+               (128, 128, 128), (0, 0, 0), (64, 64, 64)]
+    palette = [(r / 255, g / 255, b / 255) for r, g, b in palette]
     for agent_id in self._ratings['current'].keys():
       agent_info = agent_manager.get_info(agent_id)
       color = palette[agent_types[agent_info.AGENT_TYPE]]
@@ -100,7 +100,9 @@ class LeaderboardTrueskill(Leaderboard):
       # plt.ylim(87, 125)
 
     fake_lines = [plt.Line2D([0], [0], color=color) for color in palette]
-    plt.title('[{}]: {}'.format(self.LEADERBOARD_TYPE, self.FILE_PATH))
+    #plt.title('[{}]: {}'.format(self.LEADERBOARD_TYPE, self.FILE_PATH))
+    plt.xlabel('rounds played')
+    plt.ylabel('trueskill rating')
     plt.legend(fake_lines, agent_types)
     plt.show()
 
@@ -112,7 +114,6 @@ class LeaderboardTrueskill(Leaderboard):
                                mu, 2 * sigma)
                        for idx, (mu, sigma, agent_id, agent_info) in enumerate(sorted(ratings, reverse=True)))
     print(output)
-
 
 class LeaderboardPlacingMatrix(Leaderboard):
 
@@ -203,6 +204,7 @@ class LeaderboardWinningsMatrix(Leaderboard):
   def __init__(self, leaderboard_type, file_path):
     super().__init__(leaderboard_type, file_path)
     self._ratings = {'current': {}, 'n_games': {}, 'agent_ids': []}
+    self.pctl = 20
 
   def update_from_placings(self, placings):
 
@@ -228,14 +230,15 @@ class LeaderboardWinningsMatrix(Leaderboard):
   def plot_leaderboard(self, agent_manager):
     agent_ids = self._ratings['agent_ids']
     current = self._ratings['current']
+    print(sum(sum(i.values()) for i in self._ratings['n_games'].values()))
 
-    pctl = 10
+
     metrics = {agent_id: {
       'average': sum(current[agent_id].values()) / len(current[agent_id]),
       'median': np.median(list(current[agent_id].values())),
-      'pctl': np.percentile(list(current[agent_id].values()), pctl)
+      'pctl': np.percentile(list(current[agent_id].values()), self.pctl)
     } for agent_id in agent_ids}
-    ids_sorted_by_avg_rank = sorted(agent_ids, key=lambda x: metrics[x]['average'], reverse=True)
+    ids_sorted_by_avg_rank = sorted(agent_ids, key=lambda x: metrics[x]['pctl'], reverse=True)
 
     n = len(agent_ids)
     tmp_arr = np.zeros((n, n))
@@ -261,17 +264,16 @@ class LeaderboardWinningsMatrix(Leaderboard):
     agent_ids = [(agent_id, agent_manager.get_info(agent_id)) for agent_id in self._ratings['agent_ids']]
     current = self._ratings['current']
 
-    pctl = 20
     ids_with_avg_rank = (
       (agent_id,
        agent_info,
        sum(current[agent_id].values()) / len(current[agent_id].values()),
        np.median(list(current[agent_id].values())),
-       np.percentile(list(current[agent_id].values()), pctl))
+       np.percentile(list(current[agent_id].values()), self.pctl))
       for agent_id, agent_info in agent_ids)
     ids_sorted_by_avg_rank = sorted(ids_with_avg_rank, key=lambda x: x[4], reverse=True)
 
-    print('{:>4}  {} {} {:<20} {:>7} {:>7} {}pctl'.format('', 'type', 'div.id ', 'name', 'avg', 'med', pctl))
+    print('{:>4}  {} {} {:<20} {:>7} {:>7} {}pctl'.format('', 'type', 'div.id ', 'name', 'avg', 'med', self.pctl))
     output = "\n".join('{:>4}: {} {}.{} {:<20} {:>7.2f} {:>7.2f} {:>7.2f}'
                        .format(idx + 1, agent_info.AGENT_TYPE, agent_info.ORIGIN_DIVI, agent_id, agent_info.AGENT_NAME,
                                avg_rank, median_rank, pctl)

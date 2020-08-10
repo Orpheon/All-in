@@ -21,13 +21,12 @@ from agent.sac1.sac1AgentNP import Sac1AgentNP
 from agent.sac2.sac2AgentNP import Sac2AgentNP
 from strategy.compute_strat_vector import compute_strat_vector
 
-AGENT_TYPES = {'qln5': Qlearn5AgentNP,
-               'finalqlearnall': FinalQlearnAll,
-               'finalqlearn10': FinalQlearn10,
-               'finalsachigh': FinalSACHigh,
-               'finalsaclow': FinalSACLow,
-               'rndm': RandomAgentNP,
-               'call': CallAgentNP}
+AGENT_TYPES = {'Qlearn-8': Qlearn5AgentNP,
+               'Qlearn-All': FinalQlearnAll,
+               'Sac-High': FinalSACHigh,
+               'Sac-Low': FinalSACLow,
+               'Random': RandomAgentNP,
+               'Call': CallAgentNP}
 
 AgentInfo = namedtuple('AgentInfo', ['AGENT_TYPE', 'MODEL_PATH', 'TRAINABLE', 'ORIGIN_DIVI', 'AGENT_NAME'])
 
