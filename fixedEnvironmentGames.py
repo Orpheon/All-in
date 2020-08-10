@@ -44,7 +44,7 @@ ActionReaction = namedtuple('ActionReaction', ['player_idx', 'round', 'active_ro
 class AgentActionLogger(BaseAgentNP):
 
   def __init__(self, agent):
-    super().__init__(None, None, None)
+    super().__init__(None, None, None, None, None, None)
     self._agent = agent
     self.actions = []
     self.model_path = agent.MODEL_PATH
@@ -101,7 +101,7 @@ def plot_curves(x, ys, lbls, title, save_to_file):
   for idx in range(len(ys)):
     plt.bar(x, ys[idx, :], bottom=np.sum(ys[:idx, :], axis=0))
   plt.title(title)
-  plt.xlabel('preflop handvalue (winchance)')
+  plt.xlabel('preflop handvalue (win/loss)')
   plt.ylabel('frequency (percent)')
   plt.legend(lbls)
   if save_to_file:
@@ -144,12 +144,12 @@ def plot_hand_strength_bet_distribution(agent_action_logger: AgentActionLogger):
                                       for aa in available_actions]):
     print(i, sum(e))
   print('-' * 50)
-  for i, e in zip(available_amounts, [[amount_tables[hs].get(aa, 0) for hs in hand_strengths_x]
-                                      for aa in available_amounts]):
+  for i, e in sorted(zip(available_amounts, [[amount_tables[hs].get(aa, 0) for hs in hand_strengths_x]
+                                      for aa in available_amounts]), key=lambda x: x[0]):
     print(i, sum(e))
   print('-' * 50)
 
-  p_name = agent_action_logger.model_path
+  p_name = agent_action_logger._agent.AGENT_NAME
   plot_curves(hand_strengths_x, action_ys, available_actions, 'FE_action_per_hs {}'.format(p_name), False)
   plot_curves(hand_strengths_x, amount_ys, available_amounts, 'FE_amount_per_hs {}'.format(p_name), False)
 
@@ -224,15 +224,17 @@ if __name__ == '__main__':
 
   mock_game_engine = GameEngine(N_TESTCASES, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, logger)
 
-#  agent_ids = ['1338', '1028', '2377', '1991', '5920', '9437']
-  agent_ids = ['1991', '1991', '1991', '0254', '0254', '0254']
-  players = [agent_manager.get_instance(agent_id) for agent_id in agent_ids]
+  agent_ids = ['1701'] + ['2034', '2034', '2034', '5223', '5223']
+  players = [AgentActionLogger(agent_manager.get_instance(agent_id)) for agent_id in agent_ids]
+
+  for p in players: print(p)
 
   cumulated_winnings = {str(p): [-1 for _ in range(6)] for p in players}
 
   for _ in range(N_RUNS):
     for seat_shift in range(0, 6):
       print('seat_shift:', seat_shift)
+      total_winnings = mock_game_engine.run_game(players)
       winnings = np.sum(total_winnings, axis=0).tolist()
 
       for s, (p, w) in enumerate(zip(players, winnings)):
