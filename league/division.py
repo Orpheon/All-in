@@ -146,7 +146,7 @@ class PermaEvalChoiceDivision(Division):
     assert self.state['type'] == 'PermaEvalChoiceDivision'
 
 
-class PermaEvalSampleDivision(Division):
+class PermaEvalDirectDivision(Division):
   def __init__(self, file_path, game_engine, leaderboards, agent_manager: AgentManager, division_id):
     super().__init__(file_path, game_engine, leaderboards, agent_manager, division_id)
     self.state = {'type': 'PermaEvalSampleDivision', 'n_rounds_played': {}}
@@ -176,7 +176,7 @@ class PermaEvalSampleDivision(Division):
 
   def load(self):
     super().load()
-    assert self.state['type'] == 'PermaEvalSampleDivision'
+    assert self.state['type'] == 'PermaEvalDirectDivision'
 
 
 class PermaEvalSimilarDivision(Division):

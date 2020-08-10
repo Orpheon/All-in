@@ -2,12 +2,10 @@ import json
 from collections import namedtuple
 import random
 
-import numpy as np
-
 from league.division import RandomDivision
 from league.division import OverfitDivision
 from league.division import PermaEvalSimilarDivision
-from league.division import PermaEvalSampleDivision
+from league.division import PermaEvalDirectDivision
 from league.division import ClimbingDivision
 
 from league.leaderboard import LeaderboardTrueskill, LeaderboardWinningsMatrix
@@ -17,7 +15,7 @@ DIVISION_TYPES = {'Random': RandomDivision,
                   'Overfit': OverfitDivision,
                   'Climbing': ClimbingDivision,
                   'PESimilar': PermaEvalSimilarDivision,
-                  'PESample': PermaEvalSampleDivision}
+                  'PEDirect': PermaEvalDirectDivision}
 
 LEADERBOARD_TYPES = {'Trueskill': LeaderboardTrueskill,
                      'PlacingMatrix': LeaderboardPlacingMatrix,
