@@ -13,6 +13,7 @@ import seaborn as sns
 
 import numpy as np
 import treys
+import time
 
 FULL_DECK = np.array(treys.Deck.GetFullDeck())
 
@@ -224,7 +225,8 @@ if __name__ == '__main__':
 
   mock_game_engine = GameEngine(N_TESTCASES, INITIAL_CAPITAL, SMALL_BLIND, BIG_BLIND, logger)
 
-  agent_ids = ['1701'] + ['2034', '2034', '2034', '5223', '5223']
+  # agent_ids = ['1701'] + ['2034', '2034', '2034', '5223', '5223']
+  agent_ids = ['2034', '2034', '2034', '5223', '5223', '5223']
   players = [AgentActionLogger(agent_manager.get_instance(agent_id)) for agent_id in agent_ids]
 
   for p in players: print(p)
@@ -233,8 +235,10 @@ if __name__ == '__main__':
 
   for _ in range(N_RUNS):
     for seat_shift in range(0, 6):
-      print('seat_shift:', seat_shift)
+      t1 = time.time()
       total_winnings = mock_game_engine.run_game(players)
+      t2 = time.time()
+      print("Time required: {}s".format(t2 - t1))
       winnings = np.sum(total_winnings, axis=0).tolist()
 
       for s, (p, w) in enumerate(zip(players, winnings)):

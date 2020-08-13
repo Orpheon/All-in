@@ -60,12 +60,11 @@ class GameEngine:
 
     ranks = np.argsort(hand_scores, axis=1)
     sorted_hands = np.take_along_axis(hand_scores, indices=ranks, axis=1)
-    # Get everyone who has the next best hand and among which pots will be split
+    # Get everyone who has the best hand and among which pots will be split
     participants = hand_scores == sorted_hands[:, 0][:, None]
     # Get the number of times each pot will be split
     n_splits_per_game = participants.sum(axis=1)
     # Split and distribute the money
-    # FIXME: Make this a real division
     gains = pool / n_splits_per_game
     total_winnings += participants * gains[:, None]
 
@@ -129,7 +128,6 @@ class GameEngine:
 
         calls = np.where(np.logical_and(round_countdown > 0, actions == constants.CALL))[0]
         if calls.size > 0:
-          # print("True calls", calls)
           investment = np.minimum(self.INITIAL_CAPITAL - prev_round_investment[calls, player_idx], max_bets[calls])
           # Reset the bets and countdown
           current_bets[calls, player_idx] = investment

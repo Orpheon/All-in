@@ -7,34 +7,59 @@ import json
 
 import constants
 from league.agentManager import AgentManager
+from league.divisionManager import DivisionManager
 import strategy.traditional_metrics as traditional_metrics
 import strategy.multidimensional_scaling as multidimensional_scaling
 
 sns.set_style('whitegrid')
 
+DIVI_NAME_TRANSLATION = {'61': 'QlnA-Cl',
+                         '27': 'Qln8-Cl',
+                         '46': 'SacH-Cl',
+                         '58': 'SacL-Cl',
+                         '44': 'AllAg-Cl',
+                         '39': 'QlnA-Rn'}
 
 image_path = os.path.join("strategy", "images")
 
-agent_manager = AgentManager(
-  file_path='./savefiles/agent_manager.json',
-  models_path='./models',
-  possible_agent_names=None
-)
+agent_manager = AgentManager(file_path='./savefiles/agent_manager.json',
+                             models_path=None,
+                             possible_agent_names=None)
 agent_manager.load()
+
+divi_manager = DivisionManager(file_path='./savefiles/divi_manager.json',
+                               divis_path='./savefiles/divis',
+                               leaderboards_path='./savefiles/leaderboards')
+divi_manager.load()
+
+relevant_ids = ['34', '83'] + ['47'] + ['61', '46', '27', '58', '44'] + ['39']
+
+divis = divi_manager.get_divi_instances(divi_ids=relevant_ids,
+                                        game_engine=None,
+                                        agent_manager=agent_manager)
+for _, (d, lb) in divis.items():
+  d.load()
+  lb[0].load()
+
+def get_palette(n):
+  palette = [(60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (220, 190, 255), (128, 0, 0), (0, 0, 128),
+             (128, 128, 128), (0, 0, 0), (64, 64, 64)]
+  palette = [(r / 255, g / 255, b / 255) for r, g, b in palette]
+  return palette[:n]
 
 def label_point(x, y, val, ax):
   a = pd.concat({'x': x, 'y': y, 'val': val}, axis=1)
   for i, point in a.iterrows():
     ax.text(point['x'] + .02, point['y'], str(point['val']))
 
-def draw_traditional_metrics(agent_manager, hue='type'):
+def draw_traditional_metrics(agent_manager, hue='Type', division=None):
   metrics = pd.DataFrame()
 
   # with open("leaderboard_perma_eval_similar.json", "r") as f:
   #   rankings = json.load(f)['current']
 
   for agent_id, agent_info in agent_manager.get_all_agents():
-    if not agent_info.TRAINABLE:
+    if not agent_info.TRAINABLE and (division is None or agent_info.ORIGIN_DIVI == division):
       strategy = agent_manager.get_strategy_vector(agent_id)
       aggression = traditional_metrics.compute_aggression(strategy)
       tightness = traditional_metrics.compute_tightness(strategy)
@@ -43,14 +68,14 @@ def draw_traditional_metrics(agent_manager, hue='type'):
         'tightness': tightness,
         'normed_aggression': aggression / (1 + aggression) if np.isfinite(aggression) else 1,
         'aggression': aggression,
-        'type': agent_info.AGENT_TYPE,
-        'division': agent_info.ORIGIN_DIVI
+        'Type': agent_info.AGENT_TYPE,
+        'Division': DIVI_NAME_TRANSLATION[agent_info.ORIGIN_DIVI]
         # 'rank': rankings[agent_id][0]
       }, ignore_index=True)
 
   plt.figure(figsize=(8, 8))
-  if hue == 'type' or hue == 'division':
-    palette = sns.color_palette("husl", metrics[hue].nunique())
+  if hue == 'Type' or hue == 'Division':
+    palette = get_palette(metrics[hue].nunique())
     ax = sns.scatterplot(data=metrics, x='tightness', y='normed_aggression', hue=hue, palette=palette)
   elif hue == 'rank':
     ax = sns.scatterplot(data=metrics, x='tightness', y='normed_aggression', hue=hue)
@@ -58,13 +83,18 @@ def draw_traditional_metrics(agent_manager, hue='type'):
   plt.xlim(-0.05, 1.05)
   plt.ylim(-0.05, 1.05)
   plt.xlabel("Tightness")
-  plt.ylabel("Normed Aggression")
-  plt.title("Aggression vs Tightness, all agents")
+  plt.ylabel("Distorted Aggression")
+  plt.legend(framealpha=1.0)
+  # if division is None:
+  #   plt.title("Aggression vs Tightness, all agents")
+  # else:
+  #   plt.title("Aggression vs Tightness, agents from division "+division)
   # label_point(metrics.tightness, metrics.normed_aggression, metrics.agent, ax)
   os.makedirs(image_path, exist_ok=True)
   ax.axhline(y=0.5, color='k')
   ax.axvline(x=traditional_metrics.tightness_border(), color='k')
-  plt.savefig(os.path.join(image_path, "traditional_scatterplot_"+hue+".png"), bbox_inches='tight')
+  division_string = "" if division is None else "_"+division
+  plt.savefig(os.path.join(image_path, "traditional_scatterplot_"+hue+division_string+".png"), bbox_inches='tight')
   plt.clf()
 
 def draw_traditional_metrics_kmeans(agent_manager):
@@ -94,7 +124,7 @@ def draw_traditional_metrics_kmeans(agent_manager):
         }, ignore_index=True)
 
     plt.figure(figsize=(8, 8))
-    palette = sns.color_palette("husl", metrics['cluster'].nunique())
+    palette = get_palette(metrics['cluster'].nunique())
     ax = sns.scatterplot(data=metrics, x='tightness', y='normed_aggression', hue='cluster', palette=palette)
 
     plt.xlim(-0.05, 1.05)
@@ -133,7 +163,7 @@ def draw_mds(agent_manager):
     }, ignore_index=True)
 
   plt.figure(figsize=(8, 8))
-  palette = sns.color_palette("husl", data.type.nunique())
+  palette = get_palette(data.type.nunique())
   ax = sns.scatterplot(data=data, x='x', y='y', hue="type", palette=palette)
   plt.title("Multidimensional scaling, all agents")
   # label_point(data.x, data.y, data.agent, ax)
@@ -160,7 +190,7 @@ def draw_mds(agent_manager):
 
 def draw_aggression_vs_cardrank(agent_manager):
   agent_types = agent_manager.get_all_agent_types()
-  palette = sns.color_palette("husl", len(agent_types))
+  palette = get_palette(len(agent_types))
   agent_types = {t: palette[idx] for idx, t in enumerate(agent_types)}
 
   # with open("leaderboard_perma_eval_similar.json", "r") as f:
@@ -192,7 +222,7 @@ def draw_aggression_vs_cardrank(agent_manager):
 
 def draw_raise_size_vs_cardrank(agent_manager):
   agent_types = agent_manager.get_all_agent_types()
-  palette = sns.color_palette("husl", len(agent_types))
+  palette = get_palette(len(agent_types))
   agent_types = {t: palette[idx] for idx, t in enumerate(agent_types)}
 
   # with open("leaderboard_perma_eval_similar.json", "r") as f:
@@ -223,10 +253,10 @@ def draw_raise_size_vs_cardrank(agent_manager):
     plt.savefig(os.path.join(image_path, "money_vs_rank_{}.png".format(round)), bbox_inches='tight')
     plt.clf()
 
-# draw_traditional_metrics(agent_manager, hue='type')
-# draw_traditional_metrics(agent_manager, hue='division')
-# draw_traditional_metrics(agent_manager, hue='rank', filename="traditional_scatterplot_rank.png")
+draw_traditional_metrics(agent_manager, hue='Type')
+# draw_traditional_metrics(agent_manager, hue='type', division="44")
+draw_traditional_metrics(agent_manager, hue='Division')
 # draw_mds(agent_manager)
 # draw_aggression_vs_cardrank(agent_manager)
 # draw_raise_size_vs_cardrank(agent_manager)
-draw_traditional_metrics_kmeans(agent_manager)
+# draw_traditional_metrics_kmeans(agent_manager)
