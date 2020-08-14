@@ -7,12 +7,12 @@ All-In is a poker AI developed for a bachelor thesis by
 The accompanying paper can be found
 [here](https://github.com/Orpheon/Pokerbot-Thesis/blob/master/Pokerbot_Thesis.pdf).
 
-This code was written specifically for that paper is neither particularly maintained
+This code was written specifically for that paper and is neither particularly maintained
 nor documented, nor even always functional. The proper way to launch a simulation is
 to execute `runner.py` after tuning it to desire. All parameters and data about agents
-are stored in `savefiles/` and agent weights are stored in `models/`. Plots and strategy
+are stored in `savefiles/` except for agent weights which are stored in `models/`. Plots and strategy
 vectors can be computed by executing `plot_existing_strategies.py` and `agent_aggregator.py`
-after modification.
+after modification and after agents have been trained.
 
 This respository was seeded off of
 [PyPokerEngine Competition Starter Kit](https://github.com/YanickSchraner/pokerchallenge)
