@@ -1,7 +1,8 @@
 # All-In #
 
-All-In is a poker AI developed for a bachelor thesis by Jens Kaminsky and
-Alex Liebendörfer.
+All-In is a poker AI developed for a bachelor thesis by
+[Jens Kaminsky](https://github.com/BBBot2015) and
+[Alex Liebendörfer](https://github.com/Orpheon).
 
 The accompanying paper can be found
 [here](https://github.com/Orpheon/Pokerbot-Thesis/blob/master/Pokerbot_Thesis.pdf).
