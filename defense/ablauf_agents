@@ -1,0 +1,9 @@
+-show state diagram with abstract actions
+-show poker actions
+-show poker actions with rewards
+-show qlearn weights
+-show qlearn result decision
+
+sac?
+[choose bandbreite of actions - triangle?]
+[
